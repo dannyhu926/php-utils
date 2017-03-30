@@ -254,4 +254,113 @@ class Str
     public static function generateOrderNo() {
         return date('Ymd') . str_pad(mt_rand(1, 9999999), 7, '0', STR_PAD_LEFT);
     }
+
+    /**
+     *  将一个字串中含有全角的数字字符、字母、空格或'%+-()'字符转换为相应半角字符
+     *
+     * @access  public
+     * @param   string $str 待转换字串
+     *
+     * @return  string $str 处理后字串
+     */
+    public static function full2semiangle($str) {
+        $arr = array('０' => '0', '１' => '1', '２' => '2', '３' => '3', '４' => '4',
+            '５' => '5', '６' => '6', '７' => '7', '８' => '8', '９' => '9',
+            'Ａ' => 'A', 'Ｂ' => 'B', 'Ｃ' => 'C', 'Ｄ' => 'D', 'Ｅ' => 'E',
+            'Ｆ' => 'F', 'Ｇ' => 'G', 'Ｈ' => 'H', 'Ｉ' => 'I', 'Ｊ' => 'J',
+            'Ｋ' => 'K', 'Ｌ' => 'L', 'Ｍ' => 'M', 'Ｎ' => 'N', 'Ｏ' => 'O',
+            'Ｐ' => 'P', 'Ｑ' => 'Q', 'Ｒ' => 'R', 'Ｓ' => 'S', 'Ｔ' => 'T',
+            'Ｕ' => 'U', 'Ｖ' => 'V', 'Ｗ' => 'W', 'Ｘ' => 'X', 'Ｙ' => 'Y',
+            'Ｚ' => 'Z', 'ａ' => 'a', 'ｂ' => 'b', 'ｃ' => 'c', 'ｄ' => 'd',
+            'ｅ' => 'e', 'ｆ' => 'f', 'ｇ' => 'g', 'ｈ' => 'h', 'ｉ' => 'i',
+            'ｊ' => 'j', 'ｋ' => 'k', 'ｌ' => 'l', 'ｍ' => 'm', 'ｎ' => 'n',
+            'ｏ' => 'o', 'ｐ' => 'p', 'ｑ' => 'q', 'ｒ' => 'r', 'ｓ' => 's',
+            'ｔ' => 't', 'ｕ' => 'u', 'ｖ' => 'v', 'ｗ' => 'w', 'ｘ' => 'x',
+            'ｙ' => 'y', 'ｚ' => 'z',
+            '（' => '(', '）' => ')', '〔' => '[', '〕' => ']', '【' => '[',
+            '】' => ']', '〖' => '[', '〗' => ']', '“' => '[', '”' => ']',
+            '‘' => '[', '’' => ']', '｛' => '{', '｝' => '}', '《' => '<',
+            '》' => '>',
+            '％' => '%', '＋' => '+', '—' => '-', '－' => '-', '～' => '-',
+            '：' => ':', '。' => '.', '、' => ',', '，' => '.', '、' => '.',
+            '；' => ',', '？' => '?', '！' => '!', '…' => '-', '‖' => '|',
+            '”' => '"', '’' => '`', '‘' => '`', '｜' => '|', '〃' => '"',
+            '　' => ' ', '＄' => '$', '＠' => '@', '＃' => '#', '＾' => '^', '＆' => '&', '＊' => '*');
+
+        return strtr($str, $arr);
+    }
+
+    /**
+     * 字符截取 支持UTF8/GBK 英文数字1个字节 gbk2个字节，utf-8 3个字节
+     * @param $string
+     * @param $length
+     * @param $dot
+     */
+    public static function strCut($string, $length, $charset = 'utf-8', $dot = '...') {
+        if (!in_array(strtoupper($charset), array('UTF-8', 'GBK'))) {
+            $charset = 'utf-8';
+        }
+        $strlen = strlen($string);
+        if ($strlen <= $length) return $string;
+        $string = str_replace(array(' ', '&nbsp;', '&amp;', '&quot;', '&#039;', '&ldquo;', '&rdquo;', '&mdash;', '&lt;', '&gt;', '&middot;', '&hellip;'), array('∵', ' ', '&', '"', "'", '“', '”', '—', '<', '>', '·', '…'), $string);
+        $strcut = '';
+        if (strtolower($charset) == 'utf-8') {
+            $length = intval($length - strlen($dot) - $length / 3);
+            $n = $tn = $noc = 0;
+            while ($n < strlen($string)) {
+                $t = ord($string[$n]);
+                if ($t == 9 || $t == 10 || (32 <= $t && $t <= 126)) {
+                    $tn = 1;
+                    $n++;
+                    $noc++;
+                } elseif (194 <= $t && $t <= 223) {
+                    $tn = 2;
+                    $n += 2;
+                    $noc += 2;
+                } elseif (224 <= $t && $t <= 239) {
+                    $tn = 3;
+                    $n += 3;
+                    $noc += 2;
+                } elseif (240 <= $t && $t <= 247) {
+                    $tn = 4;
+                    $n += 4;
+                    $noc += 2;
+                } elseif (248 <= $t && $t <= 251) {
+                    $tn = 5;
+                    $n += 5;
+                    $noc += 2;
+                } elseif ($t == 252 || $t == 253) {
+                    $tn = 6;
+                    $n += 6;
+                    $noc += 2;
+                } else {
+                    $n++;
+                }
+                if ($noc >= $length) {
+                    break;
+                }
+            }
+            if ($noc > $length) {
+                $n -= $tn;
+            }
+            $strcut = substr($string, 0, $n);
+            $strcut = str_replace(array('∵', '&', '"', "'", '“', '”', '—', '<', '>', '·', '…'), array(' ', '&amp;', '&quot;', '&#039;', '&ldquo;', '&rdquo;', '&mdash;', '&lt;', '&gt;', '&middot;', '&hellip;'), $strcut);
+        } else {
+            $dotlen = strlen($dot);
+            $maxi = $length - $dotlen - 1;
+            $current_str = '';
+            $search_arr = array('&', ' ', '"', "'", '“', '”', '—', '<', '>', '·', '…', '∵');
+            $replace_arr = array('&amp;', '&nbsp;', '&quot;', '&#039;', '&ldquo;', '&rdquo;', '&mdash;', '&lt;', '&gt;', '&middot;', '&hellip;', ' ');
+            $search_flip = array_flip($search_arr);
+            for ($i = 0; $i < $maxi; $i++) {
+                $current_str = ord($string[$i]) > 127 ? $string[$i] . $string[++$i] : $string[$i];
+                if (in_array($current_str, $search_arr)) {
+                    $key = $search_flip[$current_str];
+                    $current_str = str_replace($search_arr[$key], $replace_arr[$key], $current_str);
+                }
+                $strcut .= $current_str;
+            }
+        }
+        return $strcut . $dot;
+    }
 }
