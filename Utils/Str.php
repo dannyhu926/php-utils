@@ -73,7 +73,7 @@ class Str
                     break;
                 case 'CHINESE':
                     $str[$i] = chr(mt_rand(176, 215)) . chr(mt_rand(161, 249));
-                    $str[$i] = static::charsetEncode("GB2312", "UTF-8", $str[$i]); //imagettftext是utf-8的,所以先转换下
+                    $str[$i] = static::charsetEncode($str[$i], "GB2312", "UTF-8"); //imagettftext是utf-8的,所以先转换下
                     $result .= $str[$i];
                     break;
                 case 'NUM':
@@ -225,7 +225,7 @@ class Str
         $strCode = mb_detect_encoding($str, $charsetlist);
 
         if (strtolower($strCode) != strtolower($toEncode)) {
-            $str = iconv($strCode, $toEncode, $str);
+            $str = static::charsetEncode($str, $strCode, $toEncode);
         }
 
         return $str;
