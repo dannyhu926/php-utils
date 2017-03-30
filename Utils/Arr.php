@@ -377,7 +377,7 @@ class Arr
     }
 
     /**
-     * Sort the array using the given Closure.
+     * 在指定的位置插入元素.
      *
      * @param array $array
      * @param \Closure $callback
