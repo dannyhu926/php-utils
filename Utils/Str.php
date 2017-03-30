@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Str.php.
+ * Str.php. 字符串工具类
  *
  * @author    overtrue <i@overtrue.me>
  * @copyright 2015 overtrue <i@overtrue.me>
@@ -51,65 +51,44 @@ class Str
     }
 
     /**
-     * Generate a more truly "random" alpha-numeric string.
+     * 生成验证码
      *
      * @param int $length
+     * @param string $type 验证码类型 FULL:数字和字母混合
      *
      * @return string
      *
-     * @throws \RuntimeException
      */
-    public static function random($length = 16) {
-        $string = '';
+    function random($length = 6, $type = 'ENGLISH') {
+        $result = '';
 
-        while (($len = strlen($string)) < $length) {
-            $size = $length - $len;
-
-            $bytes = static::randomBytes($size);
-
-            $string .= substr(str_replace(['/', '+', '='], '', base64_encode($bytes)), 0, $size);
-        }
-
-        return $string;
-    }
-
-    /**
-     * Generate a more truly "random" bytes.
-     *
-     * @param int $length
-     *
-     * @return string
-     *
-     * @throws RuntimeException
-     */
-    public static function randomBytes($length = 16) {
-        if (function_exists('random_bytes')) {
-            $bytes = random_bytes($length);
-        } elseif (function_exists('openssl_random_pseudo_bytes')) {
-            $bytes = openssl_random_pseudo_bytes($length, $strong);
-            if ($bytes === false || $strong === false) {
-                throw new RuntimeException('Unable to generate random string.');
+        $random_type = static::upper($type);
+        $rulemap_str = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
+        $rulemap_num = "123456789";
+        for ($i = 0; $i < $length; $i++) {
+            switch ($random_type) {
+                case 'ENGLISH':
+                    $rand = mt_rand(0, (strlen($rulemap_str) - 1));
+                    $result .= $rulemap_str[$rand];
+                    break;
+                case 'CHINESE':
+                    $str[$i] = chr(mt_rand(176, 215)) . chr(mt_rand(161, 249));
+                    $str[$i] = static::charsetEncode("GB2312", "UTF-8", $str[$i]); //imagettftext是utf-8的,所以先转换下
+                    $result .= $str[$i];
+                    break;
+                case 'NUM':
+                    $rand = mt_rand(0, (strlen($rulemap_num) - 1));
+                    $result .= $rulemap_num[$rand];
+                    break;
+                case 'FULL':
+                    $fullstr = $rulemap_str . $rulemap_num;
+                    $rand = mt_rand(0, (strlen($fullstr) - 1));
+                    $result .= $fullstr[$rand];
+                    break;
             }
-        } else {
-            throw new RuntimeException('OpenSSL extension is required for PHP 5 users.');
         }
 
-        return $bytes;
-    }
-
-    /**
-     * Generate a "random" alpha-numeric string.
-     *
-     * Should not be considered sufficient for cryptography, etc.
-     *
-     * @param int $length
-     *
-     * @return string
-     */
-    public static function quickRandom($length = 16) {
-        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-        return substr(str_shuffle(str_repeat($pool, $length)), 0, $length);
+        return $result;
     }
 
     /**
@@ -191,7 +170,7 @@ class Str
         return base64_decode(strtr($url, '-_,', '+/='));
     }
 
-    public static function strip_textarea($string) {
+    public static function stripTextarea($string) {
         return nl2br(str_replace(' ', '&nbsp;', htmlspecialchars($string, ENT_QUOTES)));
     }
 
@@ -256,7 +235,7 @@ class Str
      * 保留小数点后几位，并且不四舍五入
      * $bcscale 保留位数，默认2位
      */
-    public static function number_float_format($number, $bcscale = 2) {
+    public static function numberFormat($number, $bcscale = 2) {
         $tmp_bcscale = $bcscale + 1;
         return sprintf("%.{$bcscale}f", substr(sprintf("%.{$tmp_bcscale}f", $number), 0, -1));
     }
@@ -264,11 +243,15 @@ class Str
     /**
      * 代码调试
      */
-    function dd() {
+    public static function dd() {
         echo '<pre>';
         array_map(function ($x) {
             print_r($x);
         }, func_get_args());
         die;
+    }
+
+    public static function generateOrderNo() {
+        return date('Ymd') . str_pad(mt_rand(1, 9999999), 7, '0', STR_PAD_LEFT);
     }
 }
