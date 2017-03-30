@@ -51,6 +51,92 @@ class Str
     }
 
     /**
+     * Determine if a given string contains a given substring.
+     *
+     * @param  string $haystack
+     * @param  string|array $needles
+     * @return bool
+     */
+    public static function contains($haystack, $needles) {
+        foreach ((array)$needles as $needle) {
+            if ($needle != '' && mb_strpos($haystack, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if a given string starts with a given substring.
+     *
+     * @param  string $haystack
+     * @param  string|array $needles
+     * @return bool
+     */
+    public static function startsWith($haystack, $needles) {
+        foreach ((array)$needles as $needle) {
+            if ($needle != '' && substr($haystack, 0, strlen($needle)) === (string)$needle) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if a given string ends with a given substring.
+     *
+     * @param  string $haystack
+     * @param  string|array $needles
+     * @return bool
+     */
+    public static function endsWith($haystack, $needles) {
+        foreach ((array)$needles as $needle) {
+            if (substr($haystack, -strlen($needle)) === (string)$needle) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Cap a string with a single instance of a given value.
+     *
+     * @param  string $value
+     * @param  string $cap
+     * @return string
+     */
+    public static function finish($value, $cap) {
+        $quoted = preg_quote($cap, '/');
+
+        return preg_replace('/(?:' . $quoted . ')+$/u', '', $value) . $cap;
+    }
+
+    /**
+     * Determine if a given string matches a given pattern.
+     *
+     * @param  string $pattern
+     * @param  string $value
+     * @return bool
+     */
+    public static function is($pattern, $value) {
+        if ($pattern == $value) {
+            return true;
+        }
+
+        $pattern = preg_quote($pattern, '#');
+
+        // Asterisks are translated into zero-or-more regular expression wildcards
+        // to make it convenient to check if the strings starts with the given
+        // pattern such as "library/*", making any string check convenient.
+        $pattern = str_replace('\*', '.*', $pattern);
+
+        return (bool)preg_match('#^' . $pattern . '\z#u', $value);
+    }
+
+    /**
      * 生成验证码
      *
      * @param int $length
@@ -89,6 +175,16 @@ class Str
         }
 
         return $result;
+    }
+
+    /**
+     * Convert the given string to lower-case.
+     *
+     * @param  string $value
+     * @return string
+     */
+    public static function lower($value) {
+        return mb_strtolower($value, 'UTF-8');
     }
 
     /**
