@@ -256,9 +256,9 @@ class Str
             return static::$snakeCache[$key];
         }
 
-        if (! ctype_lower($value)) {
+        if (!ctype_lower($value)) {
             $value = preg_replace('/\s+/u', '', $value);
-            $value = static::lower(preg_replace('/(.)(?=[A-Z])/u', '$1'.$delimiter, $value));
+            $value = static::lower(preg_replace('/(.)(?=[A-Z])/u', '$1' . $delimiter, $value));
         }
 
         return static::$snakeCache[$key] = $value;
@@ -649,6 +649,22 @@ class Str
         }
 
         return $cache[$text];
+    }
+
+    /**
+     * Check is mbstring loaded
+     *
+     * @return bool
+     */
+    public static function isMBString() {
+        static $isLoaded;
+        if (null === $isLoaded) {
+            $isLoaded = extension_loaded('mbstring');
+            if ($isLoaded) {
+                mb_internal_encoding(self::$encoding);
+            }
+        }
+        return $isLoaded;
     }
 
     /**
