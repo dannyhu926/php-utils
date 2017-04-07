@@ -15,8 +15,8 @@
 
 namespace JBZoo\PHPUnit;
 
-use JBZoo\Utils\Arr;
-use JBZoo\Utils\Vars;
+use Utils\Arr;
+use Utils\Vars;
 
 /**
  * Class ArrayTest
@@ -78,7 +78,7 @@ class ArrayTest extends PHPUnit
     public function testLastKey()
     {
         $test = array('a' => array('a' => 'b', 'c' => 'd'));
-        is('c', Arr::lastKey(Vars::get($test['a'])));
+        is('c', Arr::last(Vars::get($test['a'])));
     }
 
     public function testFlatten()
