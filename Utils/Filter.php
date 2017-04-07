@@ -69,7 +69,7 @@ class Filter
         $noList = array('no*', 'no way', 'nope', 'nah', 'na', 'never', 'absolutely not', 'by no means', 'negative',
             'never ever', 'false', 'f', 'off', '0', 'non', 'faux', 'нет', 'н', 'немає', '-');
 
-        $string = Str::low($string);
+        $string = Str::lower($string);
 
         if (Arr::in($string, $yesList) || self::float($string) !== 0.0) {
             return true;
@@ -230,7 +230,7 @@ class Filter
      */
     public static function cmd($value)
     {
-        $value = Str::low($value);
+        $value = Str::lower($value);
         $value = preg_replace('#[^a-z0-9\_\-\.]#', '', $value);
         $value = Str::trim($value);
 
@@ -294,7 +294,7 @@ class Filter
      */
     public static function low($string)
     {
-        $cleaned = Str::low($string);
+        $cleaned = Str::lower($string);
         $cleaned = Str::trim($cleaned);
 
         return $cleaned;
@@ -395,7 +395,7 @@ class Filter
      */
     public static function ucfirst($input)
     {
-        $string = Str::low($input);
+        $string = Str::lower($input);
         $string = ucfirst($string);
 
         return $string;

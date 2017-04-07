@@ -628,7 +628,7 @@ class Arr
         }
 
         if ($glue) {
-            $result = Str::sub($result, 0, 0 - Str::len($glue));
+            $result = substr($result, 0, 0 - Str::len($glue));
         }
 
         return $result;

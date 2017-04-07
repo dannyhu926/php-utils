@@ -36,6 +36,12 @@ class Str
     protected static $studlyCache = [];
 
     /**
+     * Default charset is UTF-8
+     * @var string
+     */
+    public static $encoding = 'UTF-8';
+
+    /**
      * Convert a value to camel case.
      *
      * @param string $value
@@ -134,6 +140,32 @@ class Str
         $pattern = str_replace('\*', '.*', $pattern);
 
         return (bool)preg_match('#^' . $pattern . '\z#u', $value);
+    }
+
+    /**
+     * Generate Readable random string 生成可读的随机字符串
+     *
+     * @param int $length
+     * @return string
+     */
+    public static function randomString($length = 10, $isReadable = true) {
+        $result = '';
+
+        $vocal = array('a', 'e', 'i', 'o', 'u', '0');
+        $conso = array('b', 'c', 'd', 'f', 'g',
+            'h', 'j', 'k', 'l', 'm', 'n', 'p',
+            'r', 's', 't', 'v', 'w', 'x', 'y', 'z',
+            '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        );
+
+        $max = $length / 2;
+
+        for ($pos = 1; $pos <= $max; $pos++) {
+            $result .= $conso[mt_rand(0, count($conso) - 1)];
+            $result .= $vocal[mt_rand(0, count($vocal) - 1)];
+        }
+
+        return $result;
     }
 
     /**
@@ -344,11 +376,11 @@ class Str
         array_map(function ($x) {
             print_r($x);
         }, func_get_args());
-        die;
+        die(1);
     }
 
-    public static function generateOrderNo() {
-        return date('Ymd') . str_pad(mt_rand(1, 9999999), 7, '0', STR_PAD_LEFT);
+    public static function generateOrderNo($prefix = '') {
+        return $prefix . date('Ymd') . static::zeroPad(mt_rand(1, 9999999), 7);
     }
 
     /**
@@ -458,5 +490,478 @@ class Str
             }
         }
         return $strcut . $dot;
+    }
+
+
+    /**
+     * Strip all witespaces from the given string.
+     *
+     * @param  string $string The string to strip
+     * @return string
+     */
+    public static function stripSpace($string) {
+        return preg_replace('/\s+/', '', $string);
+    }
+
+    /**
+     * Parse text by lines
+     *
+     * @param string $text
+     * @param bool $toAssoc
+     * @return array
+     */
+    public static function parseLines($text, $toAssoc = true) {
+        $text = htmlspecialchars_decode($text);
+        $text = self::clean($text, false, false);
+
+        $text = str_replace(array("\n", "\r", "\r\n", PHP_EOL), "\n", $text);
+        $lines = explode("\n", $text);
+
+        $result = array();
+        if (!empty($lines)) {
+            foreach ($lines as $line) {
+                $line = trim($line);
+
+                if ($line === '') {
+                    continue;
+                }
+
+                if ($toAssoc) {
+                    $result[$line] = $line;
+                } else {
+                    $result[] = $line;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Make string safe
+     * - Remove UTF-8 chars
+     * - Remove all tags
+     * - Trim
+     * - Addslashes (opt)
+     * - To lower (opt)
+     *
+     * @param string $string
+     * @param bool $toLower
+     * @param bool $addslashes
+     * @return string
+     */
+    public static function clean($string, $toLower = false, $addslashes = false) {
+        $string = Slug::removeAccents($string);
+        $string = strip_tags($string);
+        $string = trim($string);
+
+        if ($addslashes) {
+            $string = addslashes($string);
+        }
+
+        if ($toLower) {
+            $string = self::low($string);
+        }
+
+        return $string;
+    }
+
+    /**
+     * Convert >, <, ', " and & to html entities, but preserves entities that are already encoded.
+     *
+     * @param string $string The text to be converted
+     * @param bool $encodedEntities
+     * @return string
+     */
+    public static function htmlEnt($string, $encodedEntities = false) {
+        if ($encodedEntities) {
+            // @codeCoverageIgnoreStart
+            if (defined('HHVM_VERSION')) {
+                $transTable = get_html_translation_table(HTML_ENTITIES, ENT_QUOTES);
+            } else {
+                /** @noinspection PhpMethodParametersCountMismatchInspection */
+                $transTable = get_html_translation_table(HTML_ENTITIES, ENT_QUOTES, self::$encoding);
+            }
+            // @codeCoverageIgnoreEnd
+
+            $transTable[chr(38)] = '&';
+
+            $regExp = '/&(?![A-Za-z]{0,4}\w{2,3};|#[0-9]{2,3};)/';
+
+            return preg_replace($regExp, '&amp;', strtr($string, $transTable));
+        }
+
+        return htmlentities($string, ENT_QUOTES, self::$encoding);
+    }
+
+    /**
+     * Pads a given string with zeroes on the left.
+     *
+     * @param  int $number The number to pad
+     * @param  int $length The total length of the desired string
+     * @return string
+     */
+    public static function zeroPad($number, $length) {
+        return str_pad($number, $length, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Check if a given string matches a given pattern.
+     *
+     * @param  string $pattern Parttern of string exptected
+     * @param  string $string String that need to be matched
+     * @param  bool $caseSensitive
+     * @return bool
+     */
+    public static function like($pattern, $string, $caseSensitive = true) {
+        if ($pattern == $string) {
+            return true;
+        }
+
+        // Preg flags
+        $flags = $caseSensitive ? '' : 'i';
+
+        // Escape any regex special characters
+        $pattern = preg_quote($pattern, '#');
+
+        // Unescape * which is our wildcard character and change it to .*
+        $pattern = str_replace('\*', '.*', $pattern);
+
+        return (bool)preg_match('#^' . $pattern . '$#' . $flags, $string);
+    }
+
+    /**
+     * Converts any accent characters to their equivalent normal characters
+     *
+     * @param string $text
+     * @param bool $isCache
+     * @return string
+     */
+    public static function slug($text = '', $isCache = false) {
+        static $cache = array();
+
+        if (!$isCache) {
+            return Slug::filter($text);
+
+        } elseif (!array_key_exists($text, $cache)) { // Not Arr::key() for performance
+            $cache[$text] = Slug::filter($text);
+        }
+
+        return $cache[$text];
+    }
+
+    /**
+     * 获取字符串长度，主要针对非纯英文字符串
+     *
+     * @static
+     * @param $string
+     * @param string $charset
+     * @return int
+     */
+    public static function len($string, $charset = 'UTF-8') {
+        $len = strlen($string);
+        $i = $count = 0;
+        $charset = strtolower(substr($charset, 0, 3));
+        while ($i < $len) {
+            if (ord($string[$i]) <= 129)
+                $i++;
+            else
+                switch ($charset) {
+                    case 'UTF-8':
+                        $i += 3;
+                        break;
+                    default:
+                        $i += 2;
+                        break;
+                }
+            $count++;
+        }
+        return $count;
+    }
+
+    /**
+     * Trim whitespaces and other special chars
+     *
+     * @param string $value
+     * @param bool $extendMode
+     * @return string
+     */
+    public static function trim($value, $extendMode = false) {
+        $result = (string)trim($value);
+
+        if ($extendMode) {
+            $result = trim($result, chr(0xE3) . chr(0x80) . chr(0x80));
+            $result = trim($result, chr(0xC2) . chr(0xA0));
+            $result = trim($result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Escape string before save it as xml content
+     *
+     * @param $string
+     * @return mixed
+     */
+    public static function escXml($string) {
+        $string = preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', ' ', $string);
+
+        $string = str_replace(
+            array("&", "<", ">", '"', "'"),
+            array("&amp;", "&lt;", "&gt;", "&quot;", "&apos;"),
+            $string
+        );
+
+        return $string;
+    }
+
+    /**
+     * Escape UTF-8 strings
+     *
+     * @param string $string
+     * @return string
+     */
+    public static function esc($string) {
+        return htmlspecialchars($string, ENT_NOQUOTES, self::$encoding);
+    }
+
+    /**
+     * Convert camel case to human readable format
+     *
+     * @param string $input
+     * @param string $separator
+     * @param bool $toLower *
+     * @return string
+     */
+    public static function splitCamelCase($input, $separator = '_', $toLower = true) {
+        $original = $input;
+
+        $output = preg_replace(array('/(?<=[^A-Z])([A-Z])/', '/(?<=[^0-9])([0-9])/'), '_$0', $input);
+        $output = preg_replace('#_{1,}#', $separator, $output);
+
+        $output = trim($output);
+        if ($toLower) {
+            $output = strtolower($output);
+        }
+
+        if (strlen($output) == 0) {
+            return $original;
+        }
+
+        return $output;
+    }
+
+    /**
+     * Generates a universally unique identifier (UUID v4) according to RFC 4122
+     * Version 4 UUIDs are pseudo-random!
+     *
+     * Returns Version 4 UUID format: xxxxxxxx-xxxx-4xxx-Yxxx-xxxxxxxxxxxx where x is
+     * any random hex digit and Y is a random choice from 8, 9, a, or b.
+     *
+     * @see http://stackoverflow.com/questions/2040240/php-function-to-generate-v4-uuid
+     *
+     * @return string
+     */
+    public static function uuid() {
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            // 32 bits for "time_low"
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            // 16 bits for "time_mid"
+            mt_rand(0, 0xffff),
+            // 16 bits for "time_hi_and_version",
+            // four most significant bits holds version number 4
+            mt_rand(0, 0x0fff) | 0x4000,
+            // 16 bits, 8 bits for "clk_seq_hi_res",
+            // 8 bits for "clk_seq_low",
+            // two most significant bits holds zero and one for variant DCE1.1
+            mt_rand(0, 0x3fff) | 0x8000,
+            // 48 bits for "node"
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
+        );
+    }
+
+    /**
+     * Get class name without namespace
+     *
+     * @param mixed $object
+     * @param bool $toLower
+     * @return mixed|string
+     */
+    public static function getClassName($object, $toLower = false) {
+        if (is_object($object)) {
+            $className = get_class($object);
+        } else {
+            $className = $object;
+        }
+
+        $result = $className;
+        if (strpos($className, '\\') !== false) {
+            $className = explode('\\', $className);
+            reset($className);
+            $result = end($className);
+        }
+
+        if ($toLower) {
+            $result = strtolower($result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Increments a trailing number in a string.
+     * Used to easily create distinct labels when copying objects. The method has the following styles:
+     *  - default: "Label" becomes "Label (2)"
+     *  - dash:    "Label" becomes "Label-2"
+     *
+     * @param   string $string The source string.
+     * @param   string $style The the style (default|dash).
+     * @param   integer $next If supplied, this number is used for the copy, otherwise it is the 'next' number.
+     * @return  string
+     */
+    public static function inc($string, $style = 'default', $next = 0) {
+        $styles = array(
+            'dash' => array(
+                '#-(\d+)$#', '-%d'
+            ),
+            'default' => array(
+                array('#\((\d+)\)$#', '#\(\d+\)$#'),
+                array(' (%d)', '(%d)'),
+            ),
+        );
+
+        $styleSpec = isset($styles[$style]) ? $styles[$style] : $styles['default'];
+
+        // Regular expression search and replace patterns.
+        if (is_array($styleSpec[0])) {
+            $rxSearch = $styleSpec[0][0];
+            $rxReplace = $styleSpec[0][1];
+        } else {
+            $rxSearch = $rxReplace = $styleSpec[0];
+        }
+
+        // New and old (existing) sprintf formats.
+        if (is_array($styleSpec[1])) {
+            $newFormat = $styleSpec[1][0];
+            $oldFormat = $styleSpec[1][1];
+        } else {
+            $newFormat = $oldFormat = $styleSpec[1];
+        }
+
+        // Check if we are incrementing an existing pattern, or appending a new one.
+        if (preg_match($rxSearch, $string, $matches)) {
+            $next = empty($next) ? ($matches[1] + 1) : $next;
+            $string = preg_replace($rxReplace, sprintf($oldFormat, $next), $string);
+        } else {
+            $next = empty($next) ? 2 : $next;
+            $string .= sprintf($newFormat, $next);
+        }
+
+        return $string;
+    }
+
+
+    /**
+     * Splits a string of multiple queries into an array of individual queries.
+     * Single line or line end comments and multi line comments are stripped off.
+     *
+     * @param   string $sql Input SQL string with which to split into individual queries.
+     * @return  array
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     */
+    public static function splitSql($sql) {
+        $start = 0;
+        $open = false;
+        $comment = false;
+        $endString = '';
+        $end = strlen($sql);
+        $queries = array();
+        $query = '';
+
+        for ($i = 0; $i < $end; $i++) {
+            $current = substr($sql, $i, 1);
+            $current2 = substr($sql, $i, 2);
+            $current3 = substr($sql, $i, 3);
+            $lenEndString = strlen($endString);
+            $testEnd = substr($sql, $i, $lenEndString);
+
+            if ($current == '"' || $current == "'" || $current2 == '--'
+                || ($current2 == '/*' && $current3 != '/*!' && $current3 != '/*+')
+                || ($current == '#' && $current3 != '#__')
+                || ($comment && $testEnd == $endString)
+            ) {
+                // Check if quoted with previous backslash
+                $num = 2;
+
+                while (substr($sql, $i - $num + 1, 1) == '\\' && $num < $i) {
+                    $num++;
+                }
+
+                // Not quoted
+                if ($num % 2 == 0) {
+                    if ($open) {
+                        if ($testEnd == $endString) {
+                            if ($comment) {
+                                $comment = false;
+                                if ($lenEndString > 1) {
+                                    $i += ($lenEndString - 1);
+                                    $current = substr($sql, $i, 1);
+                                }
+                                $start = $i + 1;
+                            }
+                            $open = false;
+                            $endString = '';
+                        }
+                    } else {
+                        $open = true;
+                        if ($current2 == '--') {
+                            $endString = "\n";
+                            $comment = true;
+                        } elseif ($current2 == '/*') {
+                            $endString = '*/';
+                            $comment = true;
+                        } elseif ($current == '#') {
+                            $endString = "\n";
+                            $comment = true;
+                        } else {
+                            $endString = $current;
+                        }
+                        if ($comment && $start < $i) {
+                            $query = $query . substr($sql, $start, ($i - $start));
+                        }
+                    }
+                }
+            }
+
+            if ($comment) {
+                $start = $i + 1;
+            }
+
+            if (($current == ';' && !$open) || $i == $end - 1) {
+                if ($start <= $i) {
+                    $query = $query . substr($sql, $start, ($i - $start + 1));
+                }
+                $query = trim($query);
+
+                if ($query) {
+                    if (($i == $end - 1) && ($current != ';')) {
+                        $query = $query . ';';
+                    }
+                    $queries[] = $query;
+                }
+
+                $query = '';
+                $start = $i + 1;
+            }
+        }
+
+        return $queries;
     }
 }
