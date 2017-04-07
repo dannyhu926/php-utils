@@ -3,8 +3,7 @@
 /**
  * File.php.
  *
- * @author    overtrue <i@overtrue.me>
- * @copyright 2015 overtrue <i@overtrue.me>
+ * @author   hudy <469671292@163.com>
  *
  * @see      https://github.com/overtrue
  * @see      http://overtrue.me

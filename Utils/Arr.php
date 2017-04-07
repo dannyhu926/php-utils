@@ -3,7 +3,7 @@
 /**
  * Arr.php. 数组工具类
  *
- * @author    overtrue <i@overtrue.me>
+ * @author   hudy <469671292@163.com>
  *
  * @see      https://github.com/overtrue
  * @see      https://github.com/laravel/framework/blob/4.2/src/Illuminate/Support/Arr.php
