@@ -394,4 +394,243 @@ class Arr
         $ret = array_merge($fore, $array);
         return $ret;
     }
+
+
+    /**
+     * Remove the duplicates from an array.
+     *
+     * @param array $array
+     * @param bool $keepKeys
+     * @return array
+     */
+    public static function unique($array, $keepKeys = false) {
+        if ($keepKeys) {
+            $array = array_unique($array);
+        } else {
+            $array = array_keys(array_flip($array));
+        }
+
+        return $array;
+    }
+
+    /**
+     * Check is value exists in the array
+     *
+     * @param string $value
+     * @param mixed $array
+     * @param bool $returnKey
+     * @return mixed
+     *
+     * @SuppressWarnings(PHPMD.ShortMethodName)
+     */
+    public static function in($value, array $array, $returnKey = false) {
+        $inArray = in_array($value, $array, true);
+
+        if ($returnKey) {
+            if ($inArray) {
+                return array_search($value, $array, true);
+            }
+
+            return null;
+        }
+
+        return $inArray;
+    }
+
+    /**
+     * Searches for a given value in an array of arrays, objects and scalar values. You can optionally specify
+     * a field of the nested arrays and objects to search in.
+     *
+     * @param  array $array The array to search
+     * @param  mixed $search The value to search for
+     * @param  bool $field The field to search in, if not specified all fields will be searched
+     * @return boolean|mixed  False on failure or the array key on success
+     */
+    public static function search(array $array, $search, $field = false) {
+        // *grumbles* stupid PHP type system
+        $search = (string)$search;
+        foreach ($array as $key => $elem) {
+            // *grumbles* stupid PHP type system
+
+            $key = (string)$key;
+
+            if ($field) {
+                if (is_object($elem) && $elem->{$field} === $search) {
+                    return $key;
+
+                } elseif (is_array($elem) && $elem[$field] === $search) {
+                    return $key;
+
+                } elseif (is_scalar($elem) && $elem === $search) {
+                    return $key;
+                }
+
+            } else {
+                if (is_object($elem)) {
+                    $elem = (array)$elem;
+                    if (in_array($search, $elem)) {
+                        return $key;
+                    }
+
+                } elseif (is_array($elem) && in_array($search, $elem)) {
+                    return $key;
+
+                } elseif (is_scalar($elem) && $elem === $search) {
+                    return $key;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns an array containing all the elements of arr1 after applying
+     * the callback function to each one.
+     *
+     * @param  string $callback Callback function to run for each element in each array
+     * @param  array $array An array to run through the callback function
+     * @param  boolean $onNoScalar Whether or not to call the callback function on nonscalar values
+     *                             (Objects, resources, etc)
+     * @return array
+     */
+    public static function mapDeep(array $array, $callback, $onNoScalar = false) {
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $args = array($value, $callback, $onNoScalar);
+                $array[$key] = call_user_func_array(array(__CLASS__, __FUNCTION__), $args);
+
+            } elseif (is_scalar($value) || $onNoScalar) {
+                $array[$key] = call_user_func($callback, $value);
+            }
+        }
+
+        return $array;
+    }
+
+    /**
+     * Clean array by custom rule
+     *
+     * @param array $haystack
+     * @return array
+     */
+    public static function clean($haystack) {
+        return array_filter($haystack);
+    }
+
+    /**
+     * Clean array before serialize to JSON
+     *
+     * @param array $array
+     * @return array
+     */
+    public static function cleanBeforeJson(array $array) {
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $array[$key] = self::cleanBeforeJson($array[$key]);
+            }
+
+            if ($array[$key] === '' || is_null($array[$key])) {
+                unset($array[$key]);
+            }
+        }
+
+        return $array;
+    }
+
+    /**
+     * Check is array is type assoc
+     *
+     * @param $array
+     * @return bool
+     */
+    public static function isAssoc($array) {
+        return array_keys($array) !== range(0, count($array) - 1);
+    }
+
+    /**
+     * Add cell to the start of assoc array
+     *
+     * @param array $array
+     * @param string $key
+     * @param mixed $value
+     * @return array
+     */
+    public static function unshiftAssoc(array &$array, $key, $value) {
+        $array = array_reverse($array, true);
+        $array[$key] = $value;
+        $array = array_reverse($array, true);
+
+        return $array;
+    }
+
+    /**
+     * Recursive array mapping
+     *
+     * @param \Closure $function
+     * @param array $array
+     * @return array
+     */
+    public static function map($function, $array) {
+        $result = array();
+
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $result[$key] = self::map($function, $value);
+            } else {
+                $result[$key] = call_user_func($function, $value);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Sort an array by keys based on another array
+     *
+     * @param array $array
+     * @param array $orderArray
+     * @return array
+     */
+    public static function sortByArray(array $array, array $orderArray) {
+        return array_merge(array_flip($orderArray), $array);
+    }
+
+    /**
+     * Convert assoc array to comment style
+     *
+     * @param array $data
+     * @return string
+     */
+    public static function toComment(array $data) {
+        $result = array();
+        foreach ($data as $key => $value) {
+            $result[] = $key . ': ' . $value . ';';
+        }
+
+        return implode(PHP_EOL, $result);
+    }
+
+    /**
+     * @param string $glue
+     * @param array $array
+     * @return string
+     */
+    public static function implode($glue, array $array) {
+        $result = '';
+
+        foreach ($array as $item) {
+            if (is_array($item)) {
+                $result .= self::implode($glue, $item) . $glue;
+            } else {
+                $result .= $item . $glue;
+            }
+        }
+
+        if ($glue) {
+            $result = Str::sub($result, 0, 0 - Str::len($glue));
+        }
+
+        return $result;
+    }
 }
