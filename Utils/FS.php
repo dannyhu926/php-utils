@@ -134,15 +134,15 @@ class FS
     }
 
     /**
-     * Binary safe to open file
+     * Binary safe to open file 将整个文件内容读出到一个字符串中
      *
-     * @param $filepath
+     * @param $filename
      * @return null|string
      */
-    public static function openFile($filepath) {
+    public static function openFile($filename) {
         $contents = null;
 
-        if ($realPath = realpath($filepath)) {
+        if ($realPath = self::real($filename)) {
             $handle = fopen($realPath, "rb");
             $contents = fread($handle, filesize($realPath));
             fclose($handle);
@@ -154,12 +154,12 @@ class FS
     /**
      * Quickest way for getting first file line
      *
-     * @param string $filepath
+     * @param string $filename
      * @return string
      */
-    public static function firstLine($filepath) {
-        if (file_exists($filepath)) {
-            $cacheRes = fopen($filepath, 'r');
+    public static function firstLine($filename) {
+        if (file_exists($filename)) {
+            $cacheRes = fopen($filename, 'r');
             $firstLine = fgets($cacheRes);
             fclose($cacheRes);
 
@@ -461,18 +461,18 @@ class FS
     /**
      * Find relative path of file (remove root part)
      *
-     * @param string $filePath
+     * @param string $filename
      * @param string|null $rootPath
      * @param string $forceDS
      * @param bool $toRealpath
      * @return mixed
      */
-    public static function getRelative($filePath, $rootPath = null, $forceDS = DIRECTORY_SEPARATOR, $toRealpath = true) {
+    public static function getRelative($filename, $rootPath = null, $forceDS = DIRECTORY_SEPARATOR, $toRealpath = true) {
         // Cleanup file path
-        if ($toRealpath && !self::isReal($filePath)) {
-            $filePath = self::real($filePath);
+        if ($toRealpath && !self::isReal($filename)) {
+            $filename = self::real($filename);
         }
-        $filePath = self::clean($filePath, $forceDS);
+        $filename = self::clean($filename, $forceDS);
 
 
         // Cleanup root path
@@ -484,7 +484,7 @@ class FS
 
 
         // Remove root part
-        $relPath = preg_replace('#^' . preg_quote($rootPath) . '#i', '', $filePath);
+        $relPath = preg_replace('#^' . preg_quote($rootPath) . '#i', '', $filename);
         $relPath = ltrim($relPath, $forceDS);
 
         return $relPath;
@@ -541,7 +541,7 @@ class FS
      * @param  boolean $overWrite 该参数控制是否覆盖原文件
      * @return  boolean
      */
-    private function copyFile($fileUrl, $filename, $overWrite = false) {
+    private function _copyFile($fileUrl, $filename, $overWrite = false) {
         if ($overWrite == true) {
             self::rmFile($filename);
         }
@@ -559,7 +559,7 @@ class FS
      * @param  boolean $overWrite 该参数控制是否覆盖原文件
      * @return  boolean
      */
-    private function moveFile($fileUrl, $filename, $overWrite = false) {
+    private function _moveFile($fileUrl, $filename, $overWrite = false) {
         if ($overWrite == true) {
             self::rmFile($filename);
         }
@@ -577,7 +577,7 @@ class FS
      * @param  boolean $overWrite 该参数控制是否覆盖原文件
      * @return  boolean
      */
-    private function copyDir($oldDir, $aimDir, $overWrite = false) {
+    private function _copyDir($oldDir, $aimDir, $overWrite = false) {
         $aimDir = substr($aimDir, -1) == '/' ? $aimDir : $aimDir . '/';
         $oldDir = substr($oldDir, -1) == '/' ? $oldDir : $oldDir . '/';
         if (!is_dir($oldDir)) {
@@ -604,7 +604,7 @@ class FS
      * @param  boolean $overWrite 该参数控制是否覆盖原文件
      * @return  boolean
      */
-    private function moveDir($oldDir, $aimDir, $overWrite = false) {
+    private function _moveDir($oldDir, $aimDir, $overWrite = false) {
         $aimDir = substr($aimDir, -1) == '/' ? $aimDir : $aimDir . '/';
         $oldDir = substr($oldDir, -1) == '/' ? $oldDir : $oldDir . '/';
         if (!is_dir($oldDir)) {
@@ -713,25 +713,23 @@ class FS
      * @param  boolean $str 待写入的字符数据
      */
     public static function writeFile($filename, $str) {
-        if (function_exists('file_put_contents')) {
-            file_put_contents($filename, $str);
-        } else {
-            $fp = fopen($filename, "wb");
-            fwrite($fp, $str);
-            fclose($fp);
-        }
+        $fp = fopen($filename, "wb");
+        fwrite($fp, $str);
+        fclose($fp);
     }
 
-    /*
-     * $filePath文件的路径，
-     * $string要写入的字符串，
-     * $line要插入、更新、删除的行数,
-     * $mode指定是插入（w）、更新（u）、删除（d）
-    */
-    public static function writeLine($filePath, $line, $mode = 'w', $string) {
+    /**
+     * 将字符串写入文件的指定行
+     *
+     * @param  string $filename文件的路径 ，
+     * @param  string $string 要写入的字符串，
+     * @param  string $line要插入 、更新、删除的行数,
+     * @param  string $mode指定是插入 （w）、更新（u）、删除（d）
+     */
+    public static function writeLine($filename, $line, $mode = 'w', $string = '') {
         $result = false;
-        if (self::isFile($filePath)) {
-            $fileArr = file($filePath); //把文件存进数组
+        if (self::isFile($filename)) {
+            $fileArr = file($filename); //把文件存进数组
             $size = count($fileArr); //数组的长度
             if ($line > $size) { //如果插入的行数大于文件现有的行数，直接用系统自带的就行
                 return $result;
@@ -752,28 +750,11 @@ class FS
                     $newFileStr .= $fileArr[$i];
                 }
             }
-            self::writeFile($filePath, $newFileStr);
+            self::writeFile($filename, $newFileStr);
             $result = true;
         }
 
         return $result;
-    }
-
-    /**
-     * 将整个文件内容读出到一个字符串中
-     *
-     * @param  string $filename 文件名
-     * @return array
-     */
-    public static function readFile($filename) {
-        if (function_exists(file_get_contents)) {
-            return file_get_contents($filename);
-        } else {
-            $fp = fopen($filename, "rb");
-            $str = fread($fp, filesize($filename));
-            fclose($fp);
-            return $str;
-        }
     }
 
     /**
@@ -793,7 +774,7 @@ class FS
 
     public static function __callStatic($method, $arguments) {
         if (in_array($method, ['copy', 'move'])) {
-            $class_method = "{$method}Dir";
+            $class_method = "_{$method}Dir";
             if (!is_dir($arguments['0'])) {
                 $class_method = "{$method}File";
             }
