@@ -727,32 +727,6 @@ class Str
     }
 
     /**
-     * Convert camel case to human readable format
-     *
-     * @param string $input
-     * @param string $separator
-     * @param bool $toLower *
-     * @return string
-     */
-    public static function splitCamelCase($input, $separator = '_', $toLower = true) {
-        $original = $input;
-
-        $output = preg_replace(array('/(?<=[^A-Z])([A-Z])/', '/(?<=[^0-9])([0-9])/'), '_$0', $input);
-        $output = preg_replace('#_{1,}#', $separator, $output);
-
-        $output = trim($output);
-        if ($toLower) {
-            $output = strtolower($output);
-        }
-
-        if (strlen($output) == 0) {
-            return $original;
-        }
-
-        return $output;
-    }
-
-    /**
      * Generates a universally unique identifier (UUID v4) according to RFC 4122
      * Version 4 UUIDs are pseudo-random!
      *

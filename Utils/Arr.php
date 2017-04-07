@@ -486,7 +486,7 @@ class Arr
 
     /**
      * Returns an array containing all the elements of arr1 after applying
-     * the callback function to each one.
+     * the callback function to each one. 使用特定function对数组中所有元素做处理
      *
      * @param  string $callback Callback function to run for each element in each array
      * @param  array $array An array to run through the callback function
