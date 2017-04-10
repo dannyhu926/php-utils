@@ -26,13 +26,13 @@ class Csv
      * @param bool $hasHeader
      * @return array
      */
-    public static function parse($csvFile, $method = 'fopen', $delimiter = ';', $enclosure = '"', $hasHeader = true) {
+    public static function parse($csvFile, $delimiter = ';', $enclosure = '"', $hasHeader = true) {
         $result = array();
 
         $headerKeys = array();
         $rowCounter = 0;
 
-        if (($handle = $method($csvFile, "r")) !== false) {
+        if (($handle = fopen($csvFile, "r")) !== false) {
             while (($row = fgetcsv($handle, self::LENGTH_LIMIT, $delimiter, $enclosure)) !== false) {
                 if ($rowCounter === 0 && $hasHeader) {
                     $headerKeys = $row;
@@ -85,7 +85,15 @@ class Csv
      * @return array
      */
     public static function taobao($csvFile) {
-        $result = self::parse($csvFile, 'fopen_utf8', '\t', null, true);
-        return $result;
+        $csvData = array();
+        $handle = self::fopen_utf8($csvFile);
+        for ($j = 1; !feof($handle); $j++) {
+            $line = fgets($handle);
+            $val = explode("\t", $line);
+            if ($j > 1) {
+                $csvData[] = $val;
+            }
+        }
+        return $csvData;
     }
 }
