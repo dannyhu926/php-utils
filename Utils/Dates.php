@@ -242,7 +242,7 @@ class Dates
      * @return string
      */
     public static function getWeekChinese($week = null) {
-        $week = $week ? $week : self::human(null, 'w');
+        $week = self::human($week, 'w');
         $weekArr = array('星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六');
         return $weekArr[$week];
     }
@@ -254,7 +254,7 @@ class Dates
      * @return bool
      */
     public static function isLeapYear($year = null) {
-        $year = $year ? $year : self::human(null, 'Y');
+        $year = self::human($year, 'Y');
         return ($year % 4 == 0 && $year % 100 != 0 || $year % 400 == 0);
     }
 
@@ -263,7 +263,7 @@ class Dates
      * @param int $year 年份，默认为当前年份
      */
     public static function getDaysInYear($year = null) {
-        $year = $year ? $year : self::human(null, 'Y');
+        $year = self::human($year, 'Y');
         return self::isLeapYear($year) ? 366 : 365;
     }
 
@@ -274,7 +274,7 @@ class Dates
      * @return string
      */
     public static function getPeriodOfTime($hour = null) {
-        $hour = $hour ? $hour : self::human(null, 'G');
+        $hour = self::human($hour, 'G');
         $period = null;
         if ($hour >= 0 && $hour < 6) {
             $period = '凌晨';
@@ -341,7 +341,7 @@ class Dates
      * @return string
      */
     public static function yearToChinese($year = null, $flag = false) {
-        $year = $year ? intval($year) : self::human(null, 'Y');
+        $year = self::human($year, 'Y');
         $data = array('零', '一', '二', '三', '四', '五', '六', '七', '八', '九');
         $chineseStr = null;
         for ($i = 0; $i < 4; $i++) {
@@ -446,7 +446,7 @@ class Dates
      * @return string 返回追加后的日期
      */
     public static function dateAdd($interval, $value, $dateTime = null, $format = null) {
-        $dateTime = $dateTime ? $dateTime : self::human();
+        $dateTime = self::human($dateTime);
         $date = getdate(self::toStamp($dateTime));
         switch ($interval) {
             case 'Y': //年
@@ -485,7 +485,7 @@ class Dates
      * @return array 月份天数数组
      */
     public static function getDaysByMonthsOfYear($year = null) {
-        $year = $year ? $year : self::human(null, 'Y');
+        $year = self::human($year, 'Y');
         $months = array(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
         if (self::isLeapYear($year)) $months[1] = 29;
         return $months;
@@ -512,7 +512,7 @@ class Dates
      * @return string 返回的日期
      */
     public static function firstDayOfYear($year = null, $format = self::DATE_FORMAT) {
-        $year = $year ? $year : self::human(null, 'Y');
+        $year = self::human($year, 'Y');
         return self::human(mktime(0, 0, 0, 1, 1, $year), $format);
     }
 
@@ -524,7 +524,7 @@ class Dates
      * @return string 返回的日期
      */
     public static function lastDayOfYear($year = null, $format = self::DATE_FORMAT) {
-        $year = $year ? $year : self::human(null, 'Y');
+        $year = self::human($year, 'Y');
         return self::human(mktime(0, 0, 0, 1, 0, $year + 1), $format);
     }
 
@@ -537,8 +537,8 @@ class Dates
      * @return string 返回的日期
      */
     public static function firstDayOfMonth($month = null, $year = null, $format = self::DATE_FORMAT) {
-        $year = $year ? $year : self::human(null, 'Y');
-        $month = $month ? $month : self::human(null, 'm');
+        $year = self::human($year, 'Y');
+        $month = self::human($month, 'm');
         return self::human(mktime(0, 0, 0, $month, 1, $year), $format);
     }
 
@@ -551,8 +551,8 @@ class Dates
      * @return string 返回的日期
      */
     public static function lastDayOfMonth($month = null, $year = null, $format = self::DATE_FORMAT) {
-        $year = $year ? $year : self::human(null, 'Y');
-        $month = $month ? $month : self::human(null, 'm');
+        $year = self::human($year, 'Y');
+        $month = self::human($month, 'm');
         return self::human(mktime(0, 0, 0, $month + 1, 0, $year), $format);
     }
 
