@@ -27,6 +27,7 @@ class Dates
     const YEAR = 31536000; // 365 days
 
     const SQL_FORMAT = 'Y-m-d H:i:s';
+    const DATE_FORMAT = 'Y-m-d';
     const SQL_NULL = '0000-00-00 00:00:00';
 
     /**
@@ -151,7 +152,7 @@ class Dates
      * @return bool
      */
     public static function isTomorrow($time) {
-        return (self::factory($time)->format('Y-m-d') === self::factory('tomorrow')->format('Y-m-d'));
+        return (self::factory($time)->format(self::DATE_FORMAT) === self::factory('tomorrow')->format(self::DATE_FORMAT));
     }
 
     /**
@@ -161,7 +162,7 @@ class Dates
      * @return bool
      */
     public static function isToday($time) {
-        return (self::factory($time)->format('Y-m-d') === self::factory()->format('Y-m-d'));
+        return (self::factory($time)->format(self::DATE_FORMAT) === self::factory()->format(self::DATE_FORMAT));
     }
 
     /**
@@ -171,7 +172,7 @@ class Dates
      * @return bool
      */
     public static function isYesterday($time) {
-        return (self::factory($time)->format('Y-m-d') === self::factory('yesterday')->format('Y-m-d'));
+        return (self::factory($time)->format(self::DATE_FORMAT) === self::factory('yesterday')->format(self::DATE_FORMAT));
     }
 
     /**
@@ -231,7 +232,7 @@ class Dates
      */
     public static function getWeekNum($date, $separator = "-") {
         $dateArr = explode($separator, $date);
-        return date("w", mktime(0, 0, 0, $dateArr[1], $dateArr[2], $dateArr[0]));
+        return self::human(mktime(0, 0, 0, $dateArr[1], $dateArr[2], $dateArr[0]), "w");
     }
 
     /**
@@ -307,9 +308,9 @@ class Dates
         } elseif ($seconds < 24 * 3600) {
             return floor($seconds / 3600) . "小时前";
         } elseif ($seconds < 48 * 3600) {
-            return date("昨天 H:i", $dateline) . "";
+            return self::human($dateline, "昨天 H:i");
         } else {
-            return date('Y-m-d', $dateline);
+            return self::human($dateline, self::DATE_FORMAT);
         }
     }
 
@@ -510,7 +511,7 @@ class Dates
      * @param int $format 返回的日期格式
      * @return string 返回的日期
      */
-    public static function firstDayOfYear($year = null, $format = 'Y-m-d') {
+    public static function firstDayOfYear($year = null, $format = self::DATE_FORMAT) {
         $year = $year ? $year : self::human(null, 'Y');
         return self::human(mktime(0, 0, 0, 1, 1, $year), $format);
     }
@@ -522,7 +523,7 @@ class Dates
      * @param int $format 返回的日期格式
      * @return string 返回的日期
      */
-    public static function lastDayOfYear($year = null, $format = 'Y-m-d') {
+    public static function lastDayOfYear($year = null, $format = self::DATE_FORMAT) {
         $year = $year ? $year : self::human(null, 'Y');
         return self::human(mktime(0, 0, 0, 1, 0, $year + 1), $format);
     }
@@ -535,7 +536,7 @@ class Dates
      * @param int $format 返回的日期格式
      * @return string 返回的日期
      */
-    public static function firstDayOfMonth($month = null, $year = null, $format = 'Y-m-d') {
+    public static function firstDayOfMonth($month = null, $year = null, $format = self::DATE_FORMAT) {
         $year = $year ? $year : self::human(null, 'Y');
         $month = $month ? $month : self::human(null, 'm');
         return self::human(mktime(0, 0, 0, $month, 1, $year), $format);
@@ -549,7 +550,7 @@ class Dates
      * @param int $format 返回的日期格式
      * @return string 返回的日期
      */
-    public static function lastDayOfMonth($month = null, $year = null, $format = 'Y-m-d') {
+    public static function lastDayOfMonth($month = null, $year = null, $format = self::DATE_FORMAT) {
         $year = $year ? $year : self::human(null, 'Y');
         $month = $month ? $month : self::human(null, 'm');
         return self::human(mktime(0, 0, 0, $month + 1, 0, $year), $format);
@@ -563,7 +564,7 @@ class Dates
      * @param string $format
      * @return array 返回日期数组
      */
-    public static function getDayRangeInBetweenDate($startDateTime, $endDateTime, $sort = false, $format = 'Y-m-d') {
+    public static function getDayRangeInBetweenDate($startDateTime, $endDateTime, $sort = false, $format = self::DATE_FORMAT) {
         $startDateTime = self::toStamp($startDateTime);
         $endDateTime = self::toStamp($endDateTime);
         $num = ($endDateTime - $startDateTime) / 86400;
