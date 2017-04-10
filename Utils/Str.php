@@ -231,6 +231,25 @@ class Str
     }
 
     /**
+     * Limit the number of words in a string.
+     *
+     * @param  string  $value
+     * @param  int     $words
+     * @param  string  $end
+     * @return string
+     */
+    public static function words($value, $words = 100, $end = '...')
+    {
+        preg_match('/^\s*+(?:\S++\s*+){1,'.$words.'}/u', $value, $matches);
+
+        if (! isset($matches[0]) || strlen($value) === strlen($matches[0])) {
+            return $value;
+        }
+
+        return rtrim($matches[0]).$end;
+    }
+    
+    /**
      * Convert the given string to title case.
      *
      * @param string $value
