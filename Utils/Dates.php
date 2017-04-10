@@ -20,14 +20,14 @@ use \DateTimeZone;
 class Dates
 {
     const MINUTE = 60;
-    const HOUR   = 3600;
-    const DAY    = 86400;
-    const WEEK   = 604800;   // 7 days
-    const MONTH  = 2592000;  // 30 days
-    const YEAR   = 31536000; // 365 days
+    const HOUR = 3600;
+    const DAY = 86400;
+    const WEEK = 604800; // 7 days
+    const MONTH = 2592000; // 30 days
+    const YEAR = 31536000; // 365 days
 
     const SQL_FORMAT = 'Y-m-d H:i:s';
-    const SQL_NULL   = '0000-00-00 00:00:00';
+    const SQL_NULL = '0000-00-00 00:00:00';
 
     /**
      * Convert to timestamp 获得时间戳
@@ -110,7 +110,7 @@ class Dates
      * @param string $format
      * @return string
      */
-    public static function human($date = '', $format = 'd M Y H:i') {
+    public static function human($date = '', $format = self::SQL_FORMAT) {
         return self::factory($date)->format($format);
     }
 
@@ -224,7 +224,7 @@ class Dates
     }
 
     /**
-     * 获取星期
+     * 获取星期几
      *
      * @param string $date 日期
      * @return int
@@ -240,7 +240,7 @@ class Dates
      * @param int $week 星期，默认为当前时间获取
      * @return string
      */
-    public static function getWeek($week = null) {
+    public static function getWeekChinese($week = null) {
         $week = $week ? $week : self::human(null, 'w');
         $weekArr = array('星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六');
         return $weekArr[$week];
@@ -349,47 +349,54 @@ class Dates
         return $flag ? '公元' . $chineseStr : $chineseStr;
     }
 
-
     /**
-     * 获取日期所属的星座、干支、生肖
+     * 获取日期所属的生肖
      *
-     * @param string $type 获取信息类型（SX：生肖、GZ：干支、XZ：星座）
+     * @param string $date
      * @return string
      */
-    public static function dateInfo($type, $date = null) {
+    public static function zodiac($date = null) {
         $year = self::human($date, 'Y');
-        $month = self::human($date, 'm');
-        $day = self::human($date, 'd');
-        $result = null;
-        switch ($type) {
-            case 'SX':
-                $data = array('鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪');
-                $result = $data[($year - 4) % 12];
-                break;
-            case 'GZ':
-                $data = array(
-                    array('甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'),
-                    array('子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥')
-                );
-                $num = $year - 1900 + 36;
-                $result = $data[0][$num % 10] . $data[1][$num % 12];
-                break;
-            case 'XZ':
-                $data = array('摩羯', '宝瓶', '双鱼', '白羊', '金牛', '双子', '巨蟹', '狮子', '处女', '天秤', '天蝎', '射手');
-                $zone = array(1222, 122, 222, 321, 421, 522, 622, 722, 822, 922, 1022, 1122, 1222);
-                if ((100 * $month + $day) >= $zone[0] || (100 * $month + $day) < $zone[1]) {
-                    $i = 0;
-                } else {
-                    for ($i = 1; $i < 12; $i++) {
-                        if ((100 * $month + $day) >= $zone[$i] && (100 * $month + $day) < $zone[$i + 1]) break;
-                    }
-                }
-                $result = $data[$i] . '座';
-                break;
-        }
-        return $result;
+        $data = array('鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪');
+        return $data[($year - 4) % 12];
     }
 
+    /**
+     * 获取日期所属的星座
+     *
+     * @param string $date
+     * @return string
+     */
+    public static function constellation($date = null) {
+        $month = self::human($date, 'm');
+        $day = self::human($date, 'd');
+        $data = array('摩羯', '宝瓶', '双鱼', '白羊', '金牛', '双子', '巨蟹', '狮子', '处女', '天秤', '天蝎', '射手');
+        $zone = array(1222, 122, 222, 321, 421, 522, 622, 722, 822, 922, 1022, 1122, 1222);
+        if ((100 * $month + $day) >= $zone[0] || (100 * $month + $day) < $zone[1]) {
+            $i = 0;
+        } else {
+            for ($i = 1; $i < 12; $i++) {
+                if ((100 * $month + $day) >= $zone[$i] && (100 * $month + $day) < $zone[$i + 1]) break;
+            }
+        }
+        return $data[$i] . '座';
+    }
+
+    /**
+     * 获取日期所属的天干地支
+     *
+     * @param string $date
+     * @return string
+     */
+    public static function heavenlyStemsAndEarthlyBranches($date = null) {
+        $year = self::human($date, 'Y');
+        $data = array(
+            array('甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'),
+            array('子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥')
+        );
+        $num = $year - 1900 + 36;
+        return $data[0][$num % 10] . $data[1][$num % 12];
+    }
 
     /**
      * 获取两个日期的差
@@ -427,7 +434,6 @@ class Dates
         }
         return $result;
     }
-
 
     /**
      * 返回指定日期在一段时间间隔时间后的日期
@@ -471,7 +477,6 @@ class Dates
         return self::human(mktime($date['hours'], $date['minutes'], $date['seconds'], $date['mon'], $date['mday'], $date['year']), $format);
     }
 
-
     /**
      * 根据年份获取每个月的天数
      *
@@ -484,7 +489,6 @@ class Dates
         if (self::isLeapYear($year)) $months[1] = 29;
         return $months;
     }
-
 
     /**
      * 返回某年的某个月有多少天
@@ -499,7 +503,6 @@ class Dates
         return !$value ? 0 : $value;
     }
 
-
     /**
      * 获取年份的第一天
      *
@@ -512,7 +515,6 @@ class Dates
         return self::human(mktime(0, 0, 0, 1, 1, $year), $format);
     }
 
-
     /**
      * 获取年份最后一天
      *
@@ -524,7 +526,6 @@ class Dates
         $year = $year ? $year : self::human(null, 'Y');
         return self::human(mktime(0, 0, 0, 1, 0, $year + 1), $format);
     }
-
 
     /**
      * 获取月份的第一天
@@ -540,7 +541,6 @@ class Dates
         return self::human(mktime(0, 0, 0, $month, 1, $year), $format);
     }
 
-
     /**
      * 获取月份最后一天
      *
@@ -554,7 +554,6 @@ class Dates
         $month = $month ? $month : self::human(null, 'm');
         return self::human(mktime(0, 0, 0, $month + 1, 0, $year), $format);
     }
-
 
     /**
      * 获取两个日期之间范围
