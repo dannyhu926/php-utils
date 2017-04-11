@@ -36,12 +36,12 @@ class XML
      * @param mixed  $data
      * @param string $root
      * @param string $item
-     * @param string $attr
+     * @param mixed  $attr
      * @param string $id
      *
      * @return string
      */
-    public static function build($data, $root = 'xml', $item = 'item', $attr = 'encoding="UTF-8"', $id = 'id') {
+    public static function build($data, $root = 'xml', $item = 'item', $attr = [], $id = 'id') {
         if (is_array($attr)) {
             $_attr = [];
 
@@ -53,7 +53,7 @@ class XML
         }
 
         $attr = trim($attr);
-        $attr = empty($attr) ? '' : " {$attr}";
+        $attr = empty($attr) ? ' version="1.0" encoding="UTF-8"' : " {$attr}";
         $xml = "<{$root}{$attr}>";
         $xml .= self::data2Xml($data, $item, $id);
         $xml .= "</{$root}>";
