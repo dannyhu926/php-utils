@@ -41,13 +41,7 @@ class XML
      *
      * @return string
      */
-    public static function build(
-        $data,
-        $root = 'xml',
-        $item = 'item',
-        $attr = '',
-        $id = 'id'
-    ) {
+    public static function build($data, $root = 'xml', $item = 'item', $attr = 'encoding="UTF-8"', $id = 'id') {
         if (is_array($attr)) {
             $_attr = [];
 
