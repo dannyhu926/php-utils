@@ -349,4 +349,30 @@ class Tree
 
         return json_encode($data);
     }
+
+    public function getArray($myid = 0, $adds = '') {
+        $number = 1;
+        $child = $this->getChild($myid);
+        if (is_array($child)) {
+            $total = count($child);
+            foreach ($child as $id => $a) {
+                $j = $k = '';
+                if ($number == $total) {
+                    $j .= $this->icon[2];
+                } else {
+                    $j .= $this->icon[1];
+                    $k = $adds ? $this->icon[0] : '';
+                }
+                $spacer = $adds ? $adds . $j : '';
+                @extract($a);
+                $a[$this->param_name] = $spacer . $a[$this->param_name];
+                $this->ret[$a[$this->param_id]] = $a;
+                $fd = $adds . $k . $this->nbsp;
+                $this->getArray($id, $fd);
+                $number++;
+            }
+        }
+
+        return $this->ret;
+    }
 }
