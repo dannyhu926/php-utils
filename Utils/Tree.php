@@ -9,10 +9,10 @@ namespace Utils;
 
 class Tree
 {
-    protected $param_id = 'id';
-    protected $param_parent_id = 'parent_id';
-    protected $param_name = 'name';
-    protected $param_children = 'children';
+    public $param_id = 'id';
+    public $param_parent_id = 'parent_id';
+    public $param_name = 'name';
+    public $param_children = 'children';
 
     /**
      * 生成树型结构所需要的2维数组
