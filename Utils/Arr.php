@@ -706,7 +706,8 @@ class Arr
         foreach ($array as $row) {
             $key = isset($row[$keyField]) ? $row[$keyField] : '';
             if ($key) {
-                $result[$key][] = $row;
+                unset($row[$keyField]);
+                $result[$key] = $row;
             }
         }
 
