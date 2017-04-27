@@ -691,4 +691,25 @@ class Arr
 
         return $result;
     }
+
+    /**
+     * 将一个二维数组按照指定字段的值分组
+     *
+     * @param array $array
+     * @param string $keyField
+     *
+     * @return array
+     */
+    public static function group(array $array, $keyField) {
+        $result = array();
+
+        foreach ($array as $row) {
+            $key = isset($row[$keyField]) ? $row[$keyField] : '';
+            if ($key) {
+                $result[$key][] = $row;
+            }
+        }
+
+        return $result;
+    }
 }
