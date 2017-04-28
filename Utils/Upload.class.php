@@ -164,9 +164,9 @@ class Upload
         }
         $this->createWatermark($this->savePath . $this->saveName);
         // 删除临时文件
-        if (!@$this->del($fileArray["tmp_name"])) {
+        /*if (!@$this->del($fileArray["tmp_name"])) {
             return false;
-        }
+        }*/
         return true;
     }
 
