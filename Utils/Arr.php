@@ -696,21 +696,32 @@ class Arr
      * 将一个二维数组按照指定字段的值分组
      *
      * @param array $array
-     * @param string $keyField
+     * @param string $key
      *
      * @return array
      */
-    public static function group(array $array, $keyField) {
-        $result = array();
-
-        foreach ($array as $row) {
-            $key = isset($row[$keyField]) ? $row[$keyField] : '';
-            if ($key) {
-                unset($row[$keyField]);
-                $result[$key] = $row;
+    public static function group($arr, $key) {
+        $grouped = [];
+        foreach ($arr as $value) {
+            if (is_object($value)) {
+                if (isset($value->{$key})) {
+                    $grouped[$value->{$key}][] = $value;
+                }
+            } elseif (is_array($value)) {
+                if (self::exists($key, $value)) {
+                    $grouped[$value[$key]][] = $value;
+                }
             }
         }
-
-        return $result;
+        // Recursively build a nested grouping if more parameters are supplied
+        // Each grouped array value is grouped according to the next sequential key
+        if (func_num_args() > 2) {
+            $args = func_get_args();
+            foreach ($grouped as $key => $value) {
+                $parms = array_merge([$value], array_slice($args, 2, func_num_args()));
+                $grouped[$key] = call_user_func_array('self::group', $parms);
+            }
+        }
+        return $grouped;
     }
 }

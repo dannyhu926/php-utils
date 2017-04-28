@@ -209,24 +209,48 @@ class ArrayTest extends PHPUnit
         isSame(array('Bob', 'Fred', 'Jane', 'Brandon'), Arr::getField($array, 'name'));
     }
 
-    public function testGroupByKey()
+    public function testGroup()
     {
-        $array = array(
-            array('name' => 'Bob', 'age' => 37),
-            array('name' => 'Bob', 'age' => 66),
-            array('name' => 'Fred', 'age' => 20),
-            array('age' => 41),
+        $infos = array(
+            array(
+                'gid' => 36,
+                'name' => '高二佳木斯',
+                'start_time' => '2015-08-28 00:00:00',
+                'pic' => '2015/08/438488a00b3219929282e3652061c2e3.png'
+            ),
+            array(
+                'gid' => 36,
+                'name' => '高二佳木斯',
+                'start_time' => '2015-08-20 00:00:00',
+                'pic' => '2015/08/438488a00b3219929282e3652061c2e3.png'
+            ),
+            array(
+                'gid' => 35,
+                'name' => '高二佳木斯',
+                'start_time' => '2015-08-28 00:00:00',
+                'pic' => '2015/08/438488a00b3219929282e3652061c2e3.png'
+            ),
+            array(
+                'gid' => 35,
+                'name' => '高二佳木斯',
+                'start_time' => '2015-08-27 00:00:00',
+                'pic' => '2015/08/438488a00b3219929282e3652061c2e3.png'
+            ),
+            array(
+                'gid' => 18,
+                'name' => '天书',
+                'start_time' => '2015-08-24 00:00:00',
+                'pic' => 'dev/2015/08/438488a00b3219929282e3652061c2e3.png'
+            ),
+            array(
+                'gid' => 17,
+                'name' => '晒黑西游',
+                'start_time' => '2015-08-24 00:00:00',
+                'pic' => ''
+            )
         );
-        isSame(array(
-            'Bob'  => array(
-                array('name' => 'Bob', 'age' => 37),
-                array('name' => 'Bob', 'age' => 66),
-            ),
-            'Fred' => array(
-                array('name' => 'Fred', 'age' => 20),
-            ),
-        ), Arr::groupByKey($array, 'name'));
-
+        Arr::group($infos, 'name');
+        Arr::group($infos, 'name', 'gid');
 
         $array = array(
             (object)array('name' => 'Bob', 'age' => 37),
@@ -234,7 +258,6 @@ class ArrayTest extends PHPUnit
             (object)array('name' => 'Fred', 'age' => 20),
             (object)array('age' => 41),
         );
-
         is(array(
             'Bob'  => array(
                 (object)array('name' => 'Bob', 'age' => 37),
@@ -243,7 +266,7 @@ class ArrayTest extends PHPUnit
             'Fred' => array(
                 (object)array('name' => 'Fred', 'age' => 20),
             ),
-        ), Arr::groupByKey($array, 'name'));
+        ), Arr::group($array, 'name'));
     }
 
     public function testMapRecursive()
