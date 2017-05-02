@@ -54,8 +54,7 @@ class Upload
 
     // 设置文件保存路径
     protected function setSavepath($savePath) {
-        $time = time();
-        $savePath = str_replace(array('{y}', '{m}', '{d}'), array(date('Y', $time), date('m', $time), date('d', $time)), strtolower($savePath));
+        $savePath = str_replace(array('{y}', '{m}', '{d}'), array(date('Y'), date('m'), date('d')), strtolower($savePath));
         $this->savePath = substr(str_replace("\\", "/", $savePath), -1) == "/" ? $savePath : $savePath . "/";
     }
 
