@@ -471,7 +471,7 @@ class phpSerial
     }
 
     //=======================  下面主要是发送中文短信支持方法 =====================
-    function mobileSend($mobile, $sms, $deviceSetArr) {
+    function mobileSend($mobile, $content, $deviceSetArr) {
         $this->deviceSet($deviceSetArr['mode']); // 这个硬件设备在COM3上
         if (isset($deviceSetArr['BAUD'])) $this->confBaudRate($deviceSetArr['BAUD']); //设置波特率
         if (isset($deviceSetArr['PARITY'])) $this->confParity($deviceSetArr['PARITY']); //校验
@@ -480,20 +480,27 @@ class phpSerial
         if (isset($deviceSetArr['CTRL_MODE'])) $this->confFlowControl($deviceSetArr['CTRL_MODE']); //流程控制
 
         if ($this->deviceOpen()) {
-            $phone_sendto = $this->invertNumbers('86' . $mobile);
-            $message = $this->hex2Str($sms);
-            $mess = "11000D91" . $phone_sendto . "000800" . sprintf("%02X", strlen($message) / 2) . $message;
+            $inter = chr(13); // 回车字符
+            $ctrlz = chr(26); // ctrl+z
 
-            $this->sendMessage("at+cmgf=0" . chr(13));
-            $this->sendMessage("at+cmgs=" . sprintf("%d", strlen($mess) / 2) . chr(13));
+            $send_to = $this->invertNumbers('86' . $mobile);
+
+            $message = $this->hex2Str($content);
+            $message = sprintf("%02X", strlen($message) / 2) . $message;
+            $message = '11000D91' . $send_to . '000800' . $message;
+
+            $atcmd = 'AT+CMGF=0' . $inter;
+            $this->sendMessage($atcmd);
+            $atcmd = 'AT+CMGS=' . sprintf("%d", strlen($message) / 2) . $inter;
+            $this->sendMessage($atcmd);
             //不加短信中心号码
-            $this->sendMessage('00' . $mess . chr(26));
+            $this->sendMessage('00' . $message . $ctrlz);
 
             //加短信中心号码
-            if (isset($deviceSetArr['SMS_CENTER'])) {
-                $phone_center = $this->invertNumbers('8613800100500');
-                $mess_ll = "0891" . $phone_center . $mess;
-                $this->sendMessage($mess_ll . chr(26));
+            if (isset($deviceSetArr['SMS_CENTER_MOBILE'])) {
+                $phone_center = $this->invertNumbers($deviceSetArr['SMS_CENTER_MOBILE']);
+                $mess_ll = "0891" . $phone_center . $message;
+                $this->sendMessage($mess_ll . $ctrlz);
             }
 
             //用完了就关掉,有始有终好习惯
@@ -504,13 +511,21 @@ class phpSerial
         }
     }
 
+    //utf-8编码转UCS-2 linux和windows不同
+    function utf8toUnicode($str) {
+        $ucs2 = "UCS-2";
+        if ($this->_os === "linux") {
+            $ucs2 = "UCS-2BE";
+        }
+        return iconv("UTF-8", $ucs2, $str);
+    }
+
     //将utf8的短信转成ucs2格式
     function hex2Str($str) {
-        $hexstring = iconv("UTF-8", "UCS-2", $str);
+        $hexstring = $this->utf8toUnicode($str);
         $str = '';
-        for ($i = 0; $i < strlen($hexstring) / 2; $i++) {
-            $str .= sprintf("%02X", ord(substr($hexstring, $i * 2 + 1, 1)));
-            $str .= sprintf("%02X", ord(substr($hexstring, $i * 2, 1)));
+        for ($i = 0, $len = strlen($hexstring); $i < $len; $i++) {
+            $str .= sprintf("%02X", ord(substr($hexstring, $i, 1)));
         }
         return $str;
     }
