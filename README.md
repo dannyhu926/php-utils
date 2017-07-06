@@ -645,7 +645,7 @@ Vars::max($number, $max)
 Vars::out($number, $min, $max)
 ```
 
-## Email 
+## Email
 ```php
 use Utils\Email;
 

@@ -374,7 +374,6 @@ class phpSerial
         if ($this->autoflush === true) $this->flush();
 
         usleep((int)($waitForReply * 1000000));
-        return true;
     }
 
     /**
@@ -481,62 +480,54 @@ class phpSerial
         if (isset($deviceSetArr['CTRL_MODE'])) $this->confFlowControl($deviceSetArr['CTRL_MODE']); //流程控制
 
         if ($this->deviceOpen()) {
-            // 格式：SMS13821987654#短信内容区
-            $code = $this->formatMobile('SMS' . $mobile . '#') . ' ' . $this->formatSms($sms);
-            $order = $this->packArg($code);
+            $phone_sendto = $this->invertNumbers('86' . $mobile);
+            $message = $this->hex2Str($sms);
+            $mess = "11000D91" . $phone_sendto . "000800" . sprintf("%02X", strlen($message) / 2) . $message;
 
-            return $this->sendMessage($order);
+            $this->sendMessage("at+cmgf=0" . chr(13));
+            $this->sendMessage("at+cmgs=" . sprintf("%d", strlen($mess) / 2) . chr(13));
+            //不加短信中心号码
+            $this->sendMessage('00' . $mess . chr(26));
+
+            //加短信中心号码
+            if (isset($deviceSetArr['SMS_CENTER'])) {
+                $phone_center = $this->invertNumbers('8613800100500');
+                $mess_ll = "0891" . $phone_center . $mess;
+                $this->sendMessage($mess_ll . chr(26));
+            }
+
+            //用完了就关掉,有始有终好习惯
+            $this->deviceClose();
         } else {
             return false;
         }
     }
 
-    /**
-     * 将形如“53 4D 53 31 33 39 35 30 30 36 35 30 30 30 23 4F 60 59 7D”的数据装入一个二进制字符串进行组包，以待通信
-     */
-    function packArg($str) {
-        $args = explode(' ', $str);
-        $php = 'return pack("c*",';
-
-        for ($i = 0; $i < count($args); $i++) {
-            $php = "{$php}0x{$args[$i]},";
+    //将utf8的短信转成ucs2格式
+    function hex2Str($str) {
+        $hexstring = iconv("UTF-8", "UCS-2", $str);
+        $str = '';
+        for ($i = 0; $i < strlen($hexstring) / 2; $i++) {
+            $str .= sprintf("%02X", ord(substr($hexstring, $i * 2 + 1, 1)));
+            $str .= sprintf("%02X", ord(substr($hexstring, $i * 2, 1)));
         }
-        $php = rtrim($php, ',');
-        $php .= ');';
-
-        return eval($php);
+        return $str;
     }
 
-    /**
-     * 将字符串转换成ACSII码所对应的十六进制,每个字符占1个字节。例:13518250288=>31 33 35 31 38 32 35 30 32 38 38
-     */
-    function formatMobile($str) {
-        $rt = '';
-        for ($i = 0; $i < strlen($str); $i++) {
-            $rt = $rt . ' ' . dechex(ord($str{$i}));
-        }
-        return trim($rt);
-    }
-
-    /**
-     * 取字符串的unicode编码的十六进制表示方法，以2个字节来表示一个字符。例：你好=>4F 60 59 7D  Aa=>00 65 00 97
-     */
-    function formatSms($str) {
-        $rt = '';
-
-        for ($i = 0; $i < mb_strlen($str, 'UTF-8'); $i++) {
-            $c = mb_substr($str, $i, 1, 'UTF-8');
-            $ord = ord($c);
-
-            if ($ord > 127) { //中文
-                $tmp = strtolower(trim(json_encode($c), '"')); //形如：\U0E74
-                $rt = $rt . ' ' . substr($tmp, 2, 2) . ' ' . substr($tmp, 4, 2);
-            } else {
-                $rt .= ' 00 ' . dechex($ord);
-            }
+    //手机号翻转,pdu格式要求
+    function invertNumbers($msisdn) {
+        $len = strlen($msisdn);
+        if (0 != fmod($len, 2)) {
+            $msisdn .= "F";
+            $len = $len + 1;
         }
 
-        return trim($rt);
+        for ($i = 0; $i < $len; $i += 2) {
+            $t = $msisdn[$i];
+            $msisdn[$i] = $msisdn[$i + 1];
+            $msisdn[$i + 1] = $t;
+        }
+        return $msisdn;
     }
 }
 
