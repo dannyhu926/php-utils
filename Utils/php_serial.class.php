@@ -475,6 +475,10 @@ class phpSerial
     function mobileSend($mobile, $sms, $deviceSetArr) {
         $this->deviceSet($deviceSetArr['mode']); // 这个硬件设备在COM3上
         if (isset($deviceSetArr['BAUD'])) $this->confBaudRate($deviceSetArr['BAUD']); //设置波特率
+        if (isset($deviceSetArr['PARITY'])) $this->confParity($deviceSetArr['PARITY']); //校验
+        if (isset($deviceSetArr['DATA'])) $this->confCharacterLength($deviceSetArr['DATA']); //数据位
+        if (isset($deviceSetArr['STOP'])) $this->confStopBits($deviceSetArr['STOP']); //停止位
+        if (isset($deviceSetArr['CTRL_MODE'])) $this->confFlowControl($deviceSetArr['CTRL_MODE']); //流程控制
 
         if ($this->deviceOpen()) {
             // 格式：SMS13821987654#短信内容区
