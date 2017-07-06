@@ -4,12 +4,19 @@
  *  php_serial.class.php 操作串口的类
  *  程序没有保证正常运行，用之有风险
  *
- *  @author dannyhu https://github.com/Xowap/PHP-Serial
+ * @author dannyhu https://github.com/Xowap/PHP-Serial
  *
  *   发送数据协议格式：SMS13821987654#短信内容区
  *   $tel = '13323332222';   // 接收短信的电话号码
  *   $sms = '《PHP也能干大事之PHP与串口通信》';  // 短信内容
- *   phpSerial->mobileSend($tel, $sms);
+ *   $serial->mobileSend($tel, $sms，['mode'=>'COM3', 'BAUD'=>115200]);
+ *
+ *   接收数据：
+ *   $serial->deviceSet($deviceSetArr['mode']); // 这个硬件设备在COM3上
+ *   $this->confBaudRate($deviceSetArr['BAUD']); //设置波特率
+ *   $serial->sendMessage("AT+CMGL=\"ALL\"\n\r",2);
+ *   var_dump($serial->readPort());
+ *   $serial->deviceClose();
  */
 namespace Utils;
 
@@ -465,8 +472,9 @@ class phpSerial
     }
 
     //=======================  下面主要是发送中文短信支持方法 =====================
-    function mobileSend($mobile, $sms, $deviceSet) {
-        $this->deviceSet($deviceSet); // 这个硬件设备在COM3上
+    function mobileSend($mobile, $sms, $deviceSetArr) {
+        $this->deviceSet($deviceSetArr['mode']); // 这个硬件设备在COM3上
+        if (isset($deviceSetArr['BAUD'])) $this->confBaudRate($deviceSetArr['BAUD']); //设置波特率
 
         if ($this->deviceOpen()) {
             // 格式：SMS13821987654#短信内容区
