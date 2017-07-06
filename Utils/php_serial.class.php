@@ -498,6 +498,7 @@ class phpSerial
 
             //用完了就关掉,有始有终好习惯
             $this->deviceClose();
+            return true;
         } else {
             return false;
         }
