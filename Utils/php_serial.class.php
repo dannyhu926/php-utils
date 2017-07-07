@@ -1,10 +1,9 @@
 <?php
 
 /**
- *  php_serial.class.php 操作串口的类
- *  程序没有保证正常运行，用之有风险
+ *   php_serial.class.php 操作串口的类
  *
- * @author dannyhu https://github.com/Xowap/PHP-Serial
+ *   @author dannyhu https://github.com/Xowap/PHP-Serial
  *
  *   发送数据协议格式：SMS13821987654#短信内容区
  *   $tel = '13323332222';   // 接收短信的电话号码
@@ -12,8 +11,14 @@
  *   $serial->mobileSend($tel, $sms，['mode'=>'COM3', 'BAUD'=>115200]);
  *
  *   接收数据：
- *   $serial->deviceSet($deviceSetArr['mode']); // 这个硬件设备在COM3上
- *   $this->confBaudRate($deviceSetArr['BAUD']); //设置波特率
+ *   $serial->deviceOpen('wb+'); //window环境fwrite有问题，用wb+解决
+ *
+ *   $serial->sendMessage("AT",1);
+ *   var_dump($serial->readPort());
+ *
+ *   $serial->sendMessage("AT+CMGF=1\n\r",1);
+ *   var_dump($serial->readPort());
+ *
  *   $serial->sendMessage("AT+CMGL=\"ALL\"\n\r",2);
  *   var_dump($serial->readPort());
  *   $serial->deviceClose();
@@ -406,11 +411,22 @@ class phpSerial
 
             return $content;
         } elseif ($this->_os === "windows") {
-            /* Do nohting : not implented yet */
-        }
+            $content = "";
+            $i = 0;
 
-        trigger_error("Reading serial port is not implemented for Windows", E_USER_WARNING);
-        return false;
+            if ($count !== 0) {
+                do {
+                    if ($i > $count) $content .= $this->winfread($this->_dHandle, ($count - $i));
+                    else $content .= $this->winfread($this->_dHandle, 128);
+                } while (($i += 128) === strlen($content));
+            } else {
+                do {
+                    $content .= $this->winfread($this->_dHandle, 128);
+                } while (($i += 128) === strlen($content));
+            }
+
+            return $content;
+        }
     }
 
     /**
@@ -431,6 +447,16 @@ class phpSerial
         }
     }
 
+    //windows环境 fread
+    function winfread($oibc, $len) {
+        $buf = '';
+        $i = 1;
+        do {
+            $i++;
+            $buf = $buf . fgetc($oibc);
+        } while ($i < $len);
+        return $buf;
+    }
 
     function _ckOpened() {
         if ($this->_dState !== self::SERIAL_DEVICE_OPENED) {
