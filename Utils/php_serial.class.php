@@ -11,6 +11,7 @@
  *   $serial->mobileSend($tel, $sms，['mode'=>'COM3', 'BAUD'=>115200]);
  *
  *   接收数据：
+ *   $serial->deviceSet('COM3');
  *   $serial->deviceOpen('wb+'); //window环境fwrite有问题，用wb+解决
  *
  *   $serial->sendMessage("AT",1);
@@ -84,7 +85,7 @@ class phpSerial
                     return true;
                 }
             } elseif ($this->_os === "windows") {
-                if (preg_match("@^COM(\d+):?$@i", $device, $matches) and $this->_exec(exec("mode " . $device)) === 0) {
+                if (preg_match("@^COM(\d+):?$@i", $device, $matches) and $this->_exec("mode " . $device) === 0) {
                     $this->_windevice = "COM" . $matches[1];
                     $this->_device = "\\.\com" . $matches[1];
                     $this->_dState = self::SERIAL_DEVICE_SET;
