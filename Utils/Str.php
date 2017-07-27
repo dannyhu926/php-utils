@@ -148,7 +148,7 @@ class Str
      * @param int $length
      * @return string
      */
-    public static function randomString($length = 10, $isReadable = true) {
+    public static function randomString($length = 10) {
         $result = '';
 
         $vocal = array('a', 'e', 'i', 'o', 'u', '0');
@@ -177,7 +177,7 @@ class Str
      * @return string
      *
      */
-    function random($length = 6, $type = 'ENGLISH') {
+    public static function random($length = 6, $type = 'ENGLISH') {
         $result = '';
 
         $random_type = static::upper($type);
@@ -198,7 +198,7 @@ class Str
                     $rand = mt_rand(0, (strlen($rulemap_num) - 1));
                     $result .= $rulemap_num[$rand];
                     break;
-                case 'FULL':
+                case 'FULL': //NUM+ENGLISH
                     $fullstr = $rulemap_str . $rulemap_num;
                     $rand = mt_rand(0, (strlen($fullstr) - 1));
                     $result .= $fullstr[$rand];
@@ -207,6 +207,41 @@ class Str
         }
 
         return $result;
+    }
+
+    /**
+     *  带格式生成随机字符 支持批量生成
+     *  但可能存在重复
+     * @param string $format 字符格式
+     *     # 表示数字 * 表示字母和数字 $ 表示字母
+     * @param integer $number 生成数量
+     * @return string | array
+     */
+    public static function buildFormatRand($format, $number = 1) {
+        $str = array();
+        $length = strlen($format);
+        for ($j = 0; $j < $number; $j++) {
+            $strtemp = '';
+            for ($i = 0; $i < $length; $i++) {
+                $char = substr($format, $i, 1);
+                switch ($char) {
+                    case "*": //字母和数字混合
+                        $strtemp .= self::random(1, 'FULL');
+                        break;
+                    case "#": //数字
+                        $strtemp .= self::random(1, "NUM");
+                        break;
+                    case "$": //大写字母
+                        $strtemp .= self::random(1, "ENGLISH");
+                        break;
+                    default: //其他格式均不转换
+                        $strtemp .= $char;
+                        break;
+                }
+            }
+            $str[] = $strtemp;
+        }
+        return $number == 1 ? $strtemp : $str;
     }
 
     /**
@@ -233,20 +268,19 @@ class Str
     /**
      * Limit the number of words in a string.
      *
-     * @param  string  $value
-     * @param  int     $words
-     * @param  string  $end
+     * @param  string $value
+     * @param  int $words
+     * @param  string $end
      * @return string
      */
-    public static function words($value, $words = 100, $end = '...')
-    {
-        preg_match('/^\s*+(?:\S++\s*+){1,'.$words.'}/u', $value, $matches);
+    public static function words($value, $words = 100, $end = '...') {
+        preg_match('/^\s*+(?:\S++\s*+){1,' . $words . '}/u', $value, $matches);
 
-        if (! isset($matches[0]) || strlen($value) === strlen($matches[0])) {
+        if (!isset($matches[0]) || strlen($value) === strlen($matches[0])) {
             return $value;
         }
 
-        return rtrim($matches[0]).$end;
+        return rtrim($matches[0]) . $end;
     }
 
     /**
@@ -401,41 +435,6 @@ class Str
 
     public static function generateOrderNo($prefix = '') {
         return $prefix . date('Ymd') . static::zeroPad(mt_rand(1, 9999999), 7);
-    }
-
-    /**
-     *  将一个字串中含有全角的数字字符、字母、空格或'%+-()'字符转换为相应半角字符
-     *
-     * @access  public
-     * @param   string $str 待转换字串
-     *
-     * @return  string $str 处理后字串
-     */
-    public static function full2semiangle($str) {
-        $arr = array('０' => '0', '１' => '1', '２' => '2', '３' => '3', '４' => '4',
-            '５' => '5', '６' => '6', '７' => '7', '８' => '8', '９' => '9',
-            'Ａ' => 'A', 'Ｂ' => 'B', 'Ｃ' => 'C', 'Ｄ' => 'D', 'Ｅ' => 'E',
-            'Ｆ' => 'F', 'Ｇ' => 'G', 'Ｈ' => 'H', 'Ｉ' => 'I', 'Ｊ' => 'J',
-            'Ｋ' => 'K', 'Ｌ' => 'L', 'Ｍ' => 'M', 'Ｎ' => 'N', 'Ｏ' => 'O',
-            'Ｐ' => 'P', 'Ｑ' => 'Q', 'Ｒ' => 'R', 'Ｓ' => 'S', 'Ｔ' => 'T',
-            'Ｕ' => 'U', 'Ｖ' => 'V', 'Ｗ' => 'W', 'Ｘ' => 'X', 'Ｙ' => 'Y',
-            'Ｚ' => 'Z', 'ａ' => 'a', 'ｂ' => 'b', 'ｃ' => 'c', 'ｄ' => 'd',
-            'ｅ' => 'e', 'ｆ' => 'f', 'ｇ' => 'g', 'ｈ' => 'h', 'ｉ' => 'i',
-            'ｊ' => 'j', 'ｋ' => 'k', 'ｌ' => 'l', 'ｍ' => 'm', 'ｎ' => 'n',
-            'ｏ' => 'o', 'ｐ' => 'p', 'ｑ' => 'q', 'ｒ' => 'r', 'ｓ' => 's',
-            'ｔ' => 't', 'ｕ' => 'u', 'ｖ' => 'v', 'ｗ' => 'w', 'ｘ' => 'x',
-            'ｙ' => 'y', 'ｚ' => 'z',
-            '（' => '(', '）' => ')', '〔' => '[', '〕' => ']', '【' => '[',
-            '】' => ']', '〖' => '[', '〗' => ']', '“' => '[', '”' => ']',
-            '‘' => '[', '’' => ']', '｛' => '{', '｝' => '}', '《' => '<',
-            '》' => '>',
-            '％' => '%', '＋' => '+', '—' => '-', '－' => '-', '～' => '-',
-            '：' => ':', '。' => '.', '、' => ',', '，' => '.', '、' => '.',
-            '；' => ',', '？' => '?', '！' => '!', '…' => '-', '‖' => '|',
-            '”' => '"', '’' => '`', '‘' => '`', '｜' => '|', '〃' => '"',
-            '　' => ' ', '＄' => '$', '＠' => '@', '＃' => '#', '＾' => '^', '＆' => '&', '＊' => '*');
-
-        return strtr($str, $arr);
     }
 
     /**
@@ -983,7 +982,7 @@ class Str
      *
      * @return  string       $str         处理后字串
      */
-    public static function makeSemiangle($str) {
+    public static function full2semiangle($str) {
         $arr = array('０' => '0', '１' => '1', '２' => '2', '３' => '3', '４' => '4',
             '５' => '5', '６' => '6', '７' => '7', '８' => '8', '９' => '9',
             'Ａ' => 'A', 'Ｂ' => 'B', 'Ｃ' => 'C', 'Ｄ' => 'D', 'Ｅ' => 'E',
