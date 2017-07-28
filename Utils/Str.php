@@ -210,38 +210,50 @@ class Str
     }
 
     /**
-     *  带格式生成随机字符 支持批量生成
-     *  但可能存在重复
-     * @param string $format 字符格式
-     *     # 表示数字 * 表示字母和数字 $ 表示字母
-     * @param integer $number 生成数量
+     *  带格式生成不重复的随机字符,支持批量生成
+     *  字符格式：# 表示数字 * 表示字母和数字 @表示字母
+     * @param  string $format 字符格式: 2017@@@@####*
+     * @param  integer $number 生成数量
+     * @param  array $except_array 排除的生成字符列表
      * @return string | array
      */
-    public static function buildFormatRand($format, $number = 1) {
-        $str = array();
+    public static function buildFormatRand($format, $number = 1, $except_array = []) {
+        $rand_list = array();
         $length = strlen($format);
         for ($j = 0; $j < $number; $j++) {
-            $strtemp = '';
+            $rand_string = '';
             for ($i = 0; $i < $length; $i++) {
                 $char = substr($format, $i, 1);
                 switch ($char) {
                     case "*": //字母和数字混合
-                        $strtemp .= self::random(1, 'FULL');
+                        $rand_string .= self::random(1, 'FULL');
                         break;
                     case "#": //数字
-                        $strtemp .= self::random(1, "NUM");
+                        $rand_string .= self::random(1, "NUM");
                         break;
-                    case "$": //大写字母
-                        $strtemp .= self::random(1, "ENGLISH");
+                    case "@": //大写字母
+                        $rand_string .= self::random(1, "ENGLISH");
                         break;
                     default: //其他格式均不转换
-                        $strtemp .= $char;
+                        $rand_string .= $char;
                         break;
                 }
             }
-            $str[] = $strtemp;
+            if (!in_array($rand_string, $rand_list)) {
+                if (count($except_array)) {
+                    if (!in_array($rand_string, $except_array)) {
+                        $rand_list[] = $rand_string;
+                    } else {
+                        $j--;
+                    }
+                } else {
+                    $rand_list[] = $rand_string;
+                }
+            } else {
+                $j--;
+            }
         }
-        return $number == 1 ? $strtemp : $str;
+        return $number == 1 ? $rand_string : $rand_list;
     }
 
     /**
