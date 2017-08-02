@@ -31,7 +31,7 @@ class Arr
 
     /**
      * Add an element to an array using "dot" notation if it doesn't exist.
-     * 如果不存在，将一个元素添加到数组中。
+     *  将一个指定键的元素添加进数组，如果数组中已有该键，则不添加。
      * @param array $array
      * @param string $key
      * @param mixed $value
@@ -79,7 +79,7 @@ class Arr
 
     /**
      * Flatten a multi-dimensional associative array with dots.
-     * 数组索引key加前缀
+     * 函数将多维数组转为一维数组，该数组不需要规则的结构。所有的键用'.'分割。
      * @param array $array
      * @param string $prepend
      *
@@ -101,7 +101,7 @@ class Arr
 
     /**
      * Get all of the given array except for a specified array of items.
-     * 获取指定数组，除了指定的数组项。
+     *  函数移除指定键的元素（数组的第一维），第二个参数包含所有要移除键的数组，并返回新数组
      * @param array $array
      * @param array|string $keys
      *
@@ -127,7 +127,7 @@ class Arr
 
     /**
      * Fetch a flattened array of a nested array element.
-     *
+     * 获取多维数组的最终值，参数为 第一维的键.第二维的键.第三维的键.... 的形式
      * @param array $array
      * @param string $key
      *
@@ -190,7 +190,7 @@ class Arr
 
     /**
      * Flatten a multi-dimensional array into a single level.
-     * 将多维数组变平为一维。
+     * 获取多维数组的最终值，该数组不需要规则的结构。并丢掉键
      * @param array $array
      *
      * @return array
@@ -209,7 +209,7 @@ class Arr
 
     /**
      * Remove one or many array items from a given array using "dot" notation.
-     *
+     * 移除数组内指定的元素，通过 键.键.键 的形式来寻找指定要移除的元素
      * @param array $array
      * @param array|string $keys
      */
@@ -232,7 +232,7 @@ class Arr
 
     /**
      * Get an item from an array using "dot" notation.
-     *
+     * 获取数组内指定的元素，通过 键.键.键 的形式来寻找指定的元素
      * @param array $array
      * @param string $key
      * @param mixed $default
@@ -260,7 +260,7 @@ class Arr
 
     /**
      * Get a subset of the items from the given array.
-     *
+     * 返回数组内指定键(仅限第一维的键)的的元素，参数为将获取的数组元素键的数组。
      * @param array $array
      * @param array|string $keys
      *
@@ -272,7 +272,7 @@ class Arr
 
     /**
      * Pluck an array of values from an array.
-     *
+     * 返回数组内指定键的值，并丢掉键，只能指定一个键。
      * @param array $array
      * @param string $value
      * @param string $key
@@ -300,7 +300,7 @@ class Arr
 
     /**
      * Get a value from the array, and remove it.
-     *
+     * 从原数组中删除指定键的元素，并返回被删除的元素的值
      * @param array $array
      * @param string $key
      * @param mixed $default
@@ -316,7 +316,7 @@ class Arr
 
     /**
      * Set an array item to a given value using "dot" notation.
-     *
+     * 为一个指定键的元素设置值，通过 键.键.键 的形式来寻找将被设置或重新赋值的元素。
      * If no key is given to the method, the entire array will be replaced.
      *
      * @param array $array
@@ -349,7 +349,7 @@ class Arr
 
     /**
      * Sort the array using the given Closure.
-     *
+     * 函数对数组里的第一维元素进行自定义排序，并保持第一维数组键。
      * @param array $array
      * @param \Closure $callback
      *

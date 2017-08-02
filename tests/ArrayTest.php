@@ -25,8 +25,7 @@ use Utils\Vars;
 class ArrayTest extends PHPUnit
 {
 
-    public function testUnique()
-    {
+    public function array_unique() {
         $array = array(10, 100, 1231, 10, 600, 20, 40, 1231, 20, 6, 1);
         isSame(array(10, 100, 1231, 600, 20, 40, 6, 1), Arr::unique($array));
 
@@ -40,76 +39,85 @@ class ArrayTest extends PHPUnit
         isSame(array('asd_1' => 'asd'), Arr::unique($array, true));
     }
 
-    public function testGet()
-    {
-        $array = array();
-
-        $array['abc']    = 'def';
-        $array['nested'] = array('key1' => 'val1', 'key2' => 'val2', 'key3' => 'val3');
-
-        // Looks for $array['abc']
-        is('def', Vars::get($array['abc']));
-
-        // Looks for $array['nested']['key2']
-        is('val2', Vars::get($array['nested']['key2']));
-
-        // Looks for $array['doesnotexist']
-        is('defaultval', Vars::get($array['doesnotexist'], 'defaultval'));
+    public function array_only() {
+        $array = array('name' => 'Joe', 'age' => 27, 'votes' => 1);
+        $array = Arr::only($array, array('name', 'votes'));
     }
 
-    public function testFirst()
-    {
-        $test = array('a' => array('a', 'b', 'c'));
-        is('a', Arr::first(Vars::get($test['a'])));
+    function array_pluck() {
+        $array = array(array('name' => 'Taylor'), array('name' => 'Dayle'));
+        $array = Arr::pluck($array, 'name');
+        // array('Taylor', 'Dayle');
     }
 
-    public function testFirstKey()
-    {
-        $test = array('a' => array('a' => 'b', 'c' => 'd'));
-        is('a', Arr::firstKey(Vars::get($test['a'])));
-    }
-
-    public function testLast()
-    {
-        $test = array('a' => array('a', 'b', 'c'));
-        is('c', Arr::last(Vars::get($test['a'])));
-    }
-
-    public function testLastKey()
-    {
-        $test = array('a' => array('a' => 'b', 'c' => 'd'));
-        is('c', Arr::last(Vars::get($test['a'])));
-    }
-
-    public function testFlatten()
-    {
-        $input = array('a', 'b', 'c', 'd',
-            array(
-                'first'  => 'e',
-                'f',
-                'second' => 'g',
-                array('h',
-                    'third' => 'i',
-                    array(array(array(array('j', 'k', 'l')))))));
-
-        $expectNoKeys   = range('a', 'l');
-        $expectWithKeys = array(
-            'a', 'b', 'c', 'd',
-            'first'  => 'e',
-            'f',
-            'second' => 'g',
-            'h',
-            'third'  => 'i',
-            'j', 'k', 'l',
+    function array_sort() {
+        $array = array(
+            array('name' => 'Jill'),
+            array('name' => 'Barry'),
         );
 
-        is($expectWithKeys, Arr::flat($input));
-        is($expectNoKeys, Arr::flat($input, false));
-        is($expectWithKeys, Arr::flat($input, true));
+        $array = array_values(Arr::sort($array, function ($value) {
+            return $value['name'];
+        }));
     }
 
-    public function testSearch()
-    {
+    function array_pull() {
+        $array = array('name' => 'Taylor', 'age' => 27);
+        $name = Arr::pull($array, 'name');
+    }
+
+    function array_set() {
+        $array = array('names' => array('programmer' => 'Joe'));
+        Arr::set($array, 'names.editor', 'Taylor');
+    }
+
+    public function array_dot() {
+        $array = array('foo' => array('bar' => 'baz'));
+        $array = Arr::dot($array);
+        Arr::dd($array);
+        // array('foo.bar' => 'baz');
+    }
+
+    public function array_add() {
+        $array = array('foo' => 'bar');
+        $array = Arr::add($array, 'key', 'value');
+        Arr::dd($array);
+    }
+
+    public function array_fetch() {
+        $array = array(
+            array('developer' => array('name' => 'Taylor')),
+            array('developer' => array('name' => 'Dayle')),
+        );
+        $array = Arr::fetch($array, 'developer.name');
+        Arr::dd($array);
+    }
+
+    public function array_forget() {
+        $array = array('names' => array('joe' => array('programmer')));
+        Arr::forget($array, 'names.joe');
+    }
+
+    public function array_get() {
+        $array = array('names' => array('joe' => array('programmer')));
+        $value = Arr::get($array, 'names.joe');
+    }
+
+    public function array_first() {
+        $array = array(100, 200, 300);
+        $value = Arr::first($array, function ($key, $value) {
+            return $value >= 150;
+        });
+    }
+
+    public function array_last() {
+        $test = array('a' => array('a', 'b', 'c'));
+        is('c', Arr::last(Vars::get($test['a'])));
+        $test = array('a' => array('a' => 'b', 'c' => 'd'));
+        is('c', Arr::last(Vars::get($test['a'])));
+    }
+
+    public function testSearch() {
         $users = array(
             1 => (object)array('username' => 'brandon', 'age' => 20),
             2 => (object)array('username' => 'matt', 'age' => 27),
@@ -138,8 +146,7 @@ class ArrayTest extends PHPUnit
         is(1, Arr::search($users, 'brandon'));
     }
 
-    public function testMapDeep()
-    {
+    public function testMapDeep() {
         $input = array(
             '<',
             'abc',
@@ -161,15 +168,13 @@ class ArrayTest extends PHPUnit
         is($expect, Arr::mapDeep($input, 'htmlentities'));
     }
 
-    public function testClean()
-    {
-        $input  = array('a', 'b', '', null, false, 0);
+    public function testClean() {
+        $input = array('a', 'b', '', null, false, 0);
         $expect = array('a', 'b');
         isSame($expect, Arr::clean($input));
     }
 
-    public function testIsAssoc()
-    {
+    public function testIsAssoc() {
         isFalse(Arr::isAssoc(array('a', 'b', 'c')));
         isFalse(Arr::isAssoc(array("0" => 'a', "1" => 'b', "2" => 'c')));
 
@@ -177,40 +182,17 @@ class ArrayTest extends PHPUnit
         isTrue(Arr::isAssoc(array("a" => 'a', "b" => 'b', "c" => 'c')));
     }
 
-    public function testUnshiftAssoc()
-    {
+    public function testUnshiftAssoc() {
         $array = array('a' => 1, 'b' => 2, 'c' => 3);
         Arr::unshiftAssoc($array, 'new', 0);
         isSame($array, array('new' => 0, 'a' => 1, 'b' => 2, 'c' => 3));
 
-        $array    = array('a' => 1, 'b' => 2, 'c' => 3);
+        $array = array('a' => 1, 'b' => 2, 'c' => 3);
         $newArray = Arr::unshiftAssoc($array, 'new', 42);
         isSame($newArray, array('new' => 42, 'a' => 1, 'b' => 2, 'c' => 3));
     }
 
-    public function testGetField()
-    {
-        $array = array(
-            array('name' => 'Bob', 'age' => 37),
-            array('name' => 'Fred', 'age' => 37),
-            array('name' => 'Jane', 'age' => 29),
-            array('name' => 'Brandon', 'age' => 20),
-            array('age' => 41),
-        );
-        isSame(array(37, 37, 29, 20, 41), Arr::getField($array, 'age'));
-
-        $array = array(
-            (object)array('name' => 'Bob', 'age' => 37),
-            (object)array('name' => 'Fred', 'age' => 37),
-            (object)array('name' => 'Jane', 'age' => 29),
-            (object)array('name' => 'Brandon', 'age' => 20),
-            (object)array('age' => 41),
-        );
-        isSame(array('Bob', 'Fred', 'Jane', 'Brandon'), Arr::getField($array, 'name'));
-    }
-
-    public function testGroup()
-    {
+    public function testGroup() {
         $infos = array(
             array(
                 'gid' => 36,
@@ -259,7 +241,7 @@ class ArrayTest extends PHPUnit
             (object)array('age' => 41),
         );
         is(array(
-            'Bob'  => array(
+            'Bob' => array(
                 (object)array('name' => 'Bob', 'age' => 37),
                 (object)array('name' => 'Bob', 'age' => 66),
             ),
@@ -269,16 +251,15 @@ class ArrayTest extends PHPUnit
         ), Arr::group($array, 'name'));
     }
 
-    public function testMapRecursive()
-    {
-        $array  = array(1, 2, 3, 4, 5);
+    public function testMapRecursive() {
+        $array = array(1, 2, 3, 4, 5);
         $result = Arr::map(function ($number) {
             return ($number * $number);
         }, $array);
 
         is(array(1, 4, 9, 16, 25), $result);
 
-        $array  = array(1, 2, 3, 4, 5, array(6, 7, array(8, array(array(array(9))))));
+        $array = array(1, 2, 3, 4, 5, array(6, 7, array(8, array(array(array(9))))));
         $result = Arr::map(function ($number) {
             return ($number * $number);
         }, $array);
@@ -286,27 +267,25 @@ class ArrayTest extends PHPUnit
         is(array(1, 4, 9, 16, 25, array(36, 49, array(64, array(array(array(81)))))), $result);
     }
 
-    public function testSortByArray()
-    {
+    public function testSortByArray() {
         $array = array(
-            'address'   => '1',
-            'name'      => '2',
-            'dob'       => '3',
+            'address' => '1',
+            'name' => '2',
+            'dob' => '3',
             'no_sort_1' => '4',
             'no_sort_2' => '5',
         );
 
         is(array(
-            'dob'       => '3',
-            'name'      => '2',
-            'address'   => '1',
+            'dob' => '3',
+            'name' => '2',
+            'address' => '1',
             'no_sort_1' => '4',
             'no_sort_2' => '5',
         ), Arr::sortByArray($array, array('dob', 'name', 'address')));
     }
 
-    public function testAddEachKey()
-    {
+    public function testAddEachKey() {
         $array = array(1, 2, 3, 4, 5);
         isSame(array(
             "prefix_0" => 1,
@@ -326,8 +305,7 @@ class ArrayTest extends PHPUnit
         ), Arr::addEachKey($array, 'prefix_'));
     }
 
-    public function testToComment()
-    {
+    public function testToComment() {
         $array = array(
             'Name' => 'Denis  ',
             'Date' => 2015,
@@ -336,48 +314,46 @@ class ArrayTest extends PHPUnit
         is('Name: Denis  ;' . PHP_EOL . 'Date: 2015;', Arr::toComment($array));
     }
 
-    public function testCleanBeforeJson()
-    {
+    public function testCleanBeforeJson() {
         $array = array(
             'str_empty' => '',
-            'str_0'     => '0',
-            'str_1'     => '1',
-            'null'      => null,
-            'bool'      => false,
-            'num'       => 1,
-            'zero'      => 0,
-            'array'     => array(
+            'str_0' => '0',
+            'str_1' => '1',
+            'null' => null,
+            'bool' => false,
+            'num' => 1,
+            'zero' => 0,
+            'array' => array(
                 'str_empty' => '',
-                'str_0'     => '0',
-                'str_1'     => '1',
-                'null'      => null,
-                'bool'      => false,
-                'num'       => 1,
-                'zero'      => 0,
+                'str_0' => '0',
+                'str_1' => '1',
+                'null' => null,
+                'bool' => false,
+                'num' => 1,
+                'zero' => 0,
             ),
         );
 
         isSame(array(
             'str_0' => '0',
             'str_1' => '1',
-            'bool'  => false,
-            'num'   => 1,
-            'zero'  => 0,
+            'bool' => false,
+            'num' => 1,
+            'zero' => 0,
             'array' => array(
                 'str_0' => '0',
                 'str_1' => '1',
-                'bool'  => false,
-                'num'   => 1,
-                'zero'  => 0,
+                'bool' => false,
+                'num' => 1,
+                'zero' => 0,
             ),
         ), Arr::cleanBeforeJson($array));
     }
 
-    public function testIsAttr()
-    {
+    public function testIsAttr() {
         $array = array(
-            'key'   => 'asd',
-            'null'  => null,
+            'key' => 'asd',
+            'null' => null,
             'false' => false,
         );
 
@@ -396,14 +372,13 @@ class ArrayTest extends PHPUnit
         isFalse(Arr::key(false, $array));
     }
 
-    public function testIn()
-    {
+    public function testIn() {
         $array = array(
-            'key'         => 'asd',
-            'null'        => null,
-            'some-bool'   => false,
+            'key' => 'asd',
+            'null' => null,
+            'some-bool' => false,
             'some-string' => '1234567890098765432111111',
-            'some-int'    => 1111112345678900987654321,
+            'some-int' => 1111112345678900987654321,
         );
 
         isFalse(Arr::in(0, $array));
@@ -417,16 +392,13 @@ class ArrayTest extends PHPUnit
         isTrue('some-bool', Arr::in(false, $array, true));
     }
 
-    public function testWrap()
-    {
-        is(array(), Arr::wrap(null));
-        is(array(1, 2, 3), Arr::wrap(array(1, 2, 3)));
-        is(array(0), Arr::wrap(0));
-        is(array(array('key' => 'value')), Arr::wrap(array('key' => 'value')));
+    public function array_flatten() {
+        $array = array('name' => 'Joe', 'languages' => array('PHP', 'Ruby'));
+        $array = array_flatten($array);
+        // array('Joe', 'PHP', 'Ruby');
     }
 
-    public function testImplodeNested()
-    {
+    public function testImplodeNested() {
         isSame('1,2,3', Arr::implode(',', array(1, 2, 3)));
         isSame('123', Arr::implode('', array(1, 2, 3)));
         isSame('1,2,3,4,5,6', Arr::implode(',', array(1, 2, 3, array(4, 5, 6))));
