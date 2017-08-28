@@ -708,7 +708,7 @@ class Arr
                     $grouped[$value->{$key}][] = $value;
                 }
             } elseif (is_array($value)) {
-                if (self::exists($key, $value)) {
+                if (self::exists($value, $key)) {
                     $grouped[$value[$key]][] = $value;
                 }
             }
