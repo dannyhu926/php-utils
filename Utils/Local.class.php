@@ -13,7 +13,7 @@
  */
 namespace Utils;
 
-class Upload
+class Local
 {
     public $saveName; // 保存名
     public $savePath; // 附件存放物理目录
