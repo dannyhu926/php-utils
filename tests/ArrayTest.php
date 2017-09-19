@@ -110,6 +110,13 @@ class ArrayTest extends PHPUnit
         });
     }
 
+    public function array_where() {
+        $array = array(100, 200, 300);
+        $value = Arr::where($array, function ($key, $value) {
+            return $value >= 150;
+        });
+    }
+
     public function array_last() {
         $test = array('a' => array('a', 'b', 'c'));
         is('c', Arr::last(Vars::get($test['a'])));
