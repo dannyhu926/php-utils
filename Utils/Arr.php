@@ -724,4 +724,25 @@ class Arr
         }
         return $grouped;
     }
+
+    /**
+     * 一般用于将自动生成的数字索引下标改为某一项有序的值
+     *
+     * @param $array    待转换的数组
+     * @param string $key 此项为转换的有序值key名称。若为无序，同值会被替换。
+     * @return array
+     */
+    public static function resetArrayKey($array, $key = 'id') {
+        $arrayFormat = array();
+        if (!is_array($array) || !count($array)) return $arrayFormat;
+        foreach ($array as $v) {
+            if (isset($v[$key])) {
+                $arrayFormat[$v[$key]] = $v;
+            } else {
+                $arrayFormat[] = $v;
+            }
+        }
+
+        return $arrayFormat;
+    }
 }
