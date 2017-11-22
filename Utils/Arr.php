@@ -732,14 +732,13 @@ class Arr
      * @param string $key 此项为转换的有序值key名称。若为无序，同值会被替换。
      * @return array
      */
-    public static function resetArrayKey($array, $key = 'id') {
+    public static function resetArrayKey($array, $key = 'id', $value = "") {
         $arrayFormat = array();
+
         if (!is_array($array) || !count($array)) return $arrayFormat;
         foreach ($array as $v) {
             if (isset($v[$key])) {
-                $arrayFormat[$v[$key]] = $v;
-            } else {
-                $arrayFormat[] = $v;
+                $arrayFormat[$v[$key]] = isset($v[$value]) && $value ? $v[$value] : $v;
             }
         }
 
