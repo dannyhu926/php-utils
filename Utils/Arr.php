@@ -732,7 +732,7 @@ class Arr
      * @param string $key 此项为转换的有序值key名称。若为无序，同值会被替换。
      * @return array
      */
-    public static function resetArrayKey($array, $key = 'id', $value = "") {
+    public static function reset($array, $key = 'id', $value = "") {
         $arrayFormat = array();
 
         if (!is_array($array) || !count($array)) return $arrayFormat;
