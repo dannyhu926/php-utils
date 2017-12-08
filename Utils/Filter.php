@@ -10,8 +10,8 @@
 
 namespace Utils;
 
-use JBZoo\Data\Data;
-use JBZoo\Data\JSON;
+use Utils\Data\Data;
+use Utils\Data\JSON;
 
 /**
  * Class Filter

@@ -574,4 +574,29 @@ class Dates
         }
         return $sort ? array_reverse($dateArr) : $dateArr;
     }
+
+    /**
+     * 返回2个时间点之前的时间点，默认以半小时为步长
+     *
+     * @param $start_datetime
+     * @param $end_datetime
+     * @param int $step 默认每间隔30分钟一个时间点
+     * @return array
+     */
+    public static function getClockStepArr($start_datetime, $end_datetime, $step = 1800) {
+        $clock_array = array();
+
+        $time1 = strtotime($start_datetime);
+        $time2 = strtotime($end_datetime);
+        $timediff = $time2 - $time1;
+        for ($i = 0; $i <= $timediff; $i = $i + $step) {
+            $time_row = $time1 + $i;
+            $clock_array[] = date('H:i', $time_row);
+        }
+        if ($time_row < $time2) {
+            $clock_array[] = date('H:i', $time2);
+        }
+
+        return $clock_array;
+    }
 }
