@@ -500,6 +500,7 @@ if (!class_exists('FastDFS', false)) {
 
                 if (count($this->storageObjs) > 0) {
                     list(, $storageObj) = each($this->storageObjs);
+                    reset($this->storageObjs);
                     return $storageObj;
                 }
 
