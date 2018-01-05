@@ -1020,4 +1020,34 @@ class Str
 
         return strtr($str, $arr);
     }
+
+    /**
+     * Check value to find if it was serialized.
+     *
+     * If $data is not an string, then returned value will always be false.
+     * Serialized data is always a string.
+     *
+     * @param  mixed $data Value to check to see if was serialized
+     * @return boolean
+     */
+    public static function isSerialized($data) {
+        // If it isn't a string, it isn't serialized
+        if (!is_string($data)) {
+            return false;
+        }
+        $data = trim($data);
+        // Is it the serialized NULL value?
+        if ($data === 'N;') {
+            return true;
+        } elseif ($data === 'b:0;' || $data === 'b:1;') {
+            // Is it a serialized boolean?
+            return true;
+        }
+        $length = strlen($data);
+        // Check some basic requirements of all serialized strings
+        if ($length < 4 || $data[1] !== ':' || ($data[$length - 1] !== ';' && $data[$length - 1] !== '}')) {
+            return false;
+        }
+        return @unserialize($data) !== false;
+    }
 }

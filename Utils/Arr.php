@@ -567,6 +567,47 @@ class Arr
     }
 
     /**
+     * Searches for a given value in an array of arrays, objects and scalar
+     * values. You can optionally specify a field of the nested arrays and
+     * objects to search in.
+     *
+     * @param  array $array The array to search
+     * @param  scalar $search The value to search for
+     * @param  string $field The field to search in, if not specified
+     *                         all fields will be searched
+     * @return boolean|scalar  False on failure or the array key on success
+     */
+    public static function searchDeep(array $array, $search, $field = false) {
+        // *grumbles* stupid PHP type system
+        $search = (string)$search;
+        foreach ($array as $key => $elem) {
+            // *grumbles* stupid PHP type system
+            $key = (string)$key;
+            if ($field) {
+                if (is_object($elem) && $elem->{$field} === $search) {
+                    return $key;
+                } elseif (is_array($elem) && $elem[$field] === $search) {
+                    return $key;
+                } elseif (is_scalar($elem) && $elem === $search) {
+                    return $key;
+                }
+            } else {
+                if (is_object($elem)) {
+                    $elem = (array)$elem;
+                    if (in_array($search, $elem)) {
+                        return $key;
+                    }
+                } elseif (is_array($elem) && in_array($search, $elem)) {
+                    return $key;
+                } elseif (is_scalar($elem) && $elem === $search) {
+                    return $key;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Clean array by custom rule
      *
      * @param array $haystack
