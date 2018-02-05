@@ -785,4 +785,39 @@ class Arr
 
         return $arrayFormat;
     }
+
+    /**
+     * 根据指定的键值对数组排序
+     *
+     * @param array $array 要排序的数组
+     * @param string $keyname 键值名称
+     * @param int $sortDirection 排序方向
+     *
+     * @return array
+     */
+    public static function column_sort($array, $keyname, $sortDirection = SORT_ASC) {
+        return self::sortby_multifields($array, array($keyname => $sortDirection));
+    }
+
+    /**
+     * 将一个二维数组按照指定列进行排序，类似 SQL 语句中的 ORDER BY
+     *
+     * @param array $rowset
+     * @param array $args
+     */
+    public static function sortby_multifields($rowset, $args) {
+        $sortArray = array();
+        $sortRule = '';
+        foreach ($args as $sortField => $sortDir) {
+            foreach ($rowset as $offset => $row) {
+                $sortArray[$sortField][$offset] = $row[$sortField];
+            }
+            $sortRule .= '$sortArray[\'' . $sortField . '\'], ' . $sortDir . ', ';
+        }
+        if (empty($sortArray) || empty($sortRule)) {
+            return $rowset;
+        }
+        eval('array_multisort(' . $sortRule . '$rowset);');
+        return $rowset;
+    }
 }

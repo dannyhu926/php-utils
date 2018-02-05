@@ -418,4 +418,18 @@ class ArrayTest extends PHPUnit
 
         isSame('1,2,3', Arr::implode(',', array('key1' => 1, 'key2' => 2, 'key3' => 3)));
     }
+
+    public function test(){
+        $arr=[
+            array(
+                'name'=>'小坏龙',
+                'age'=>28
+            ),
+            array(
+                'name'=>'小坏龙2',
+                'age'=>14
+            )
+        ];
+        $aa =  Arr::column_sort($arr, 'age');
+    }
 }
