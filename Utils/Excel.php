@@ -150,7 +150,7 @@ class Excel
      * 填充Excel列数据
      * param $list 数据列表
      * param $columns Excel表头数据 $columns = array(
-     *   array('field' => 'name', 'title' => '姓名', 'CellExplicit'=>PHPExcel_Cell_DataType::TYPE_STRING),
+     *   array('field' => 'name', 'title' => '姓名', 'data_type'=>'string','format'=>PHPExcel_Cell_DataType::TYPE_STRING),
      *   array('field' => 'list数组元素键值', 'title' => 'B列Excel表头的标题内容'),
      * );
      */
@@ -172,8 +172,24 @@ class Excel
             foreach ($columns as $key => $column) {
                 $word = PHPExcel_Cell::stringFromColumnIndex($key + 1);
                 $value = $info[$column['field']];
-                if (isset($column['CellExplicit'])) {
-                    $objActSheet->setCellValueExplicit($word . $i, $value, $column['CellExplicit']);
+
+                if (isset($column['data_type'])) {
+                    $data_type = strtoupper($column['data_type']);
+                    if ($data_type == 'IMAGE' && is_file($value)) { //添加图片
+                        $objDrawing = new PHPExcel_Worksheet_Drawing();
+                        $objDrawing->setCoordinates($word . $i); /*设置图片要插入的单元格*/
+                        $objDrawing->setPath($value); //写入图片路径
+                        $objDrawing->setHeight(80);
+                        $objDrawing->setOffsetX(10); //写入图片在指定格中的X坐标值
+                        $objDrawing->setWorksheet($objActSheet);
+                    } elseif ($data_type == 'NUMBER') { //日期，数字，百分比，金额
+                        $objActSheet->setCellValue($word . $i, $value);
+                        $format = isset($column['format']) ? $column['format'] : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
+                        $objActSheet->getStyle($word . $i)->getNumberFormat()->setFormatCode($format);
+                    } elseif ($data_type == 'STRING') {
+                        $format = isset($column['format']) ? $column['format'] : PHPExcel_Cell_DataType::TYPE_STRING;
+                        $objActSheet->setCellValueExplicit($word . $i, $value, $format);
+                    }
                 } else {
                     $objActSheet->setCellValue($word . $i, $value);
                 }
