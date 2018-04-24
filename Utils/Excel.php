@@ -192,8 +192,8 @@ class Excel
                         $objDrawing->setWidthAndHeight(100, 30);
                         $objDrawing->setWorksheet($objActSheet);
                         //设置表格宽度覆盖默认设置
-                        $objActSheet->getColumnDimension($word)->setWidth(30);
-                        $objActSheet->getRowDimension($i)->setRowHeight(100);
+                        $objActSheet->getColumnDimension($word)->setWidth(100);
+                        $objActSheet->getRowDimension($i)->setRowHeight(30);
                     } elseif ($data_type == 'NUMBER') { //日期，数字，百分比，金额
                         $objActSheet->setCellValue($word . $i, $value);
                         $format = isset($column['format']) ? $column['format'] : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
