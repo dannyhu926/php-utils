@@ -175,19 +175,27 @@ class Excel
 
                 if (isset($column['data_type'])) {
                     $data_type = strtoupper($column['data_type']);
-                    if ($data_type == 'IMAGE' && is_file($value)) { //添加图片
-                        $objDrawing = new PHPExcel_Worksheet_Drawing();
+                    if ($data_type == 'IMAGE') { //添加图片
+                        $format = in_array($column['source'], ['online', 'local']) ? $column['source'] : 'local';
+                        if ($format == 'local') {  //本地图片
+                            $objDrawing = new PHPExcel_Worksheet_Drawing();
+                            if (is_file($value)) {
+                                $objDrawing->setPath($value); //写入图片路径
+                            }
+                        } elseif ($format == 'online') { //网络图片
+                            $objDrawing = new PHPExcel_Worksheet_MemoryDrawing();
+                            $objDrawing->setImageResource(imagecreatefrompng($value));
+                        } else {
+                            continue;
+                        }
                         $objDrawing->setCoordinates($word . $i); /*设置图片要插入的单元格*/
-                        $objDrawing->setPath($value); //写入图片路径
-                        $objDrawing->setHeight(80);
-                        $objDrawing->setOffsetX(10); //写入图片在指定格中的X坐标值
+                        $objDrawing->setWidthAndHeight(100, 30);
                         $objDrawing->setWorksheet($objActSheet);
                     } elseif ($data_type == 'NUMBER') { //日期，数字，百分比，金额
                         $objActSheet->setCellValue($word . $i, $value);
                         $format = isset($column['format']) ? $column['format'] : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
                         $objActSheet->getStyle($word . $i)->getNumberFormat()->setFormatCode($format);
                     } elseif ($data_type == 'STRING') {
-                        $format = isset($column['format']) ? $column['format'] : PHPExcel_Cell_DataType::TYPE_STRING;
                         $objActSheet->setCellValueExplicit($word . $i, $value, $format);
                     }
                 } else {
@@ -213,7 +221,7 @@ class Excel
         $objActSheet->setSharedStyle($style_obj, "{$firstWord}2:{$maxWord}{$i}");
 
         //默认列宽
-        $objActSheet->getDefaultColumnDimension()->setWidth(14);
+        $objActSheet->getDefaultColumnDimension()->setWidth(30);
 
         //设置当前活动sheet的名称和表格标题
         $objActSheet->setTitle($sheet_title);
