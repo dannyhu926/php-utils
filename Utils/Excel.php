@@ -196,6 +196,7 @@ class Excel
                         $format = isset($column['format']) ? $column['format'] : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
                         $objActSheet->getStyle($word . $i)->getNumberFormat()->setFormatCode($format);
                     } elseif ($data_type == 'STRING') {
+                        $format = isset($column['format']) ? $column['format'] : PHPExcel_Cell_DataType::TYPE_STRING;
                         $objActSheet->setCellValueExplicit($word . $i, $value, $format);
                     }
                 } else {
