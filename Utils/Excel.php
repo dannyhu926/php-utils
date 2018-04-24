@@ -191,6 +191,9 @@ class Excel
                         $objDrawing->setCoordinates($word . $i); /*设置图片要插入的单元格*/
                         $objDrawing->setWidthAndHeight(100, 30);
                         $objDrawing->setWorksheet($objActSheet);
+                        //设置表格宽度覆盖默认设置
+                        $objActSheet->getColumnDimension($word)->setWidth(30);
+                        $objActSheet->getRowDimension($i)->setRowHeight(100);
                     } elseif ($data_type == 'NUMBER') { //日期，数字，百分比，金额
                         $objActSheet->setCellValue($word . $i, $value);
                         $format = isset($column['format']) ? $column['format'] : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
@@ -202,6 +205,8 @@ class Excel
                 } else {
                     $objActSheet->setCellValue($word . $i, $value);
                 }
+                //设置自动换行：前提是单元格内的值超列宽，或者在值内写入个\n
+                $objActSheet->getStyle($word . $i)->getAlignment()->setWrapText(true);//自动换行
             }
         }
 
@@ -222,7 +227,7 @@ class Excel
         $objActSheet->setSharedStyle($style_obj, "{$firstWord}2:{$maxWord}{$i}");
 
         //默认列宽
-        $objActSheet->getDefaultColumnDimension()->setWidth(30);
+        $objActSheet->getDefaultColumnDimension()->setWidth(20);
 
         //设置当前活动sheet的名称和表格标题
         $objActSheet->setTitle($sheet_title);
