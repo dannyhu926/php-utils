@@ -10,12 +10,6 @@ class Excel
 {
     private static $_instanceObj = null;
     private static $_instanceExcelObj = null;
-    private static $filesuffix2excel = array(
-        'xls' => 'Excel5',
-        'xlsx' => 'Excel2007',
-        'pdf' => 'PDF',
-        'csv' => 'CSV',
-    );
 
     public function __construct() {
         /*导入phpExcel核心类  */
@@ -79,6 +73,9 @@ class Excel
     public function readData($filename, $sheetIndex = 1) {
         $reader_type = PHPExcel_IOFactory::identify($filename);
         $objReader = PHPExcel_IOFactory::createReader($reader_type);
+        if ($reader_type == "CSV") {
+            $objReader = $objReader->setInputEncoding('GBK');
+        }
         $objReader->setReadDataOnly(true); //只读取数据，忽略里面各种格式等(对于Excel读去，有很大优化)
         $objPHPExcel = $objReader->load($filename);
         $sheetIdx = max((int)$sheetIndex - 1, 0);
@@ -107,6 +104,9 @@ class Excel
     public function readFilterData($excelFile, $startRow = 2, $chunkSize = 600, $sheetIndex = 1) {
         $excelType = PHPExcel_IOFactory::identify($excelFile);
         $excelReader = PHPExcel_IOFactory::createReader($excelType);
+        if ($excelType == "CSV") {
+            $excelReader = $excelReader->setInputEncoding('GBK');
+        }
         $chunkFilter = new ChunkReadFilter($startRow, $chunkSize);
         $excelReader->setReadFilter($chunkFilter); // 设置实例化的过滤器对象
         $phpexcel = $excelReader->load($excelFile);
@@ -250,10 +250,9 @@ class ChunkReadFilter implements PHPExcel_Reader_IReadFilter
 
     public function readCell($column, $row, $worksheetName = '') {
         if ($row >= $this->_startRow && $row <= $this->_endRow) { //过滤行
-//            if (in_array($column,range('A','E'))) {
-            if ($this->_columns && in_array($column, $this->_columns)) { //过滤列
-                return true;
-            }
+//            if ($this->_columns && in_array($column, $this->_columns)) { //过滤列
+            return true;
+//            }
         }
         return false;
     }
