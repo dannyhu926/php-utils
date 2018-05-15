@@ -1,5 +1,6 @@
 <?php
 namespace Utils;
+
 /**
  * @author        dannyhu
  * Excel          导出导入数据类
@@ -34,6 +35,7 @@ class Excel
         return self::$_instanceExcelObj;
     }
 
+
     /**
      * 生成Excel文件
      * param $outputFileName Excel文件名
@@ -67,10 +69,11 @@ class Excel
 
     /**
      * 读取Excel的数据
-     * param $callback 对数据进行操作的回调方法名
-     * param $filename 读取excel路径文件名
+     * @param $callback 对数据进行操作的回调方法名
+     * @param string $column_arr 文件路径 eg:['id', 'phone', 'province', 'city', 'operators', 'area_code', 'post_code'];
+     * @param $filename 读取excel路径文件名
      */
-    public function readData($filename, $sheetIndex = 1) {
+    public function readData($filename, $column_arr, $sheetIndex = 1) {
         $reader_type = PHPExcel_IOFactory::identify($filename);
         $objReader = PHPExcel_IOFactory::createReader($reader_type);
         if ($reader_type == "CSV") {
@@ -84,10 +87,13 @@ class Excel
         $highestRow = $objWorksheet->getHighestRow(); // 取得总行数
         $highestColumn = $objWorksheet->getHighestColumn(); // 取得总列数
         $highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
+        if ($highestColumnIndex != count($column_arr)) {
+            throw new Exception('column_arr参数配置错误');
+        }
         $excelData = array();
         for ($row = 1; $row <= $highestRow; $row++) {
             for ($col = 0; $col < $highestColumnIndex; $col++) {
-                $excelData[$row][] = (string)$objWorksheet->getCellByColumnAndRow($col, $row)->getValue();
+                $excelData[$row][$column_arr[$col]] = (string)$objWorksheet->getCellByColumnAndRow($col, $row)->getValue();
             }
         }
         return $excelData;
@@ -97,11 +103,12 @@ class Excel
      * 读取excel 指定的行数和列数 转换成数组
      *
      * @param string $excelFile 文件路径
+     * @param string $column_arr 文件路径 eg:['id', 'phone', 'province', 'city', 'operators', 'area_code', 'post_code'];
      * @param int    $startRow  开始读取的行数
      * @param int    $chunkSize 读取的条数
      * @return array
      */
-    public function readFilterData($excelFile, $startRow = 2, $chunkSize = 600, $sheetIndex = 1) {
+    public function readFilterData($excelFile, $column_arr, $startRow = 2, $chunkSize = 600, $sheetIndex = 1) {
         $excelType = PHPExcel_IOFactory::identify($excelFile);
         $excelReader = PHPExcel_IOFactory::createReader($excelType);
         if ($excelType == "CSV") {
@@ -115,6 +122,9 @@ class Excel
 
         $highestColumn = $activeSheet->getHighestColumn(); //最后列数所对应的字母，例如第1行就是A
         $highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
+        if ($highestColumnIndex != count($column_arr)) {
+            throw new Exception('column_arr参数配置错误');
+        }
         $data = array();
         $endRow = $startRow + $chunkSize;
         for ($row = $startRow; $row <= $endRow; $row++) {
@@ -131,7 +141,7 @@ class Excel
                         $value = PHPExcel_Style_NumberFormat::toFormattedString($value, $formatcode);
                     }
                 }
-                $data[$row][] = $value;
+                $data[$row][$column_arr[$col]] = $value;
             }
         }
         return $data;
