@@ -74,7 +74,7 @@ class Excel
         $reader_type = PHPExcel_IOFactory::identify($filename);
         $objReader = PHPExcel_IOFactory::createReader($reader_type);
         if ($reader_type == "CSV") {
-            $objReader = $objReader->setInputEncoding('GBK');
+            $objReader->setInputEncoding('GBK');
         }
         $objReader->setReadDataOnly(true); //只读取数据，忽略里面各种格式等(对于Excel读去，有很大优化)
         $objPHPExcel = $objReader->load($filename);
@@ -105,7 +105,7 @@ class Excel
         $excelType = PHPExcel_IOFactory::identify($excelFile);
         $excelReader = PHPExcel_IOFactory::createReader($excelType);
         if ($excelType == "CSV") {
-            $excelReader = $excelReader->setInputEncoding('GBK');
+            $excelReader->setInputEncoding('GBK');
         }
         $chunkFilter = new ChunkReadFilter($startRow, $chunkSize);
         $excelReader->setReadFilter($chunkFilter); // 设置实例化的过滤器对象
