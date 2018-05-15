@@ -111,7 +111,19 @@ class Excel
         $excelData = array();
         for ($row = 1; $row <= $highestRow; $row++) {
             for ($col = 0; $col < $highestColumnIndex; $col++) {
-                $excelData[$row][] = (string)$objWorksheet->getCellByColumnAndRow($col, $row)->getValue();
+                $cell = $objWorksheet->getCellByColumnAndRow($col, $row);
+                $value = $cell->getValue();
+                //todo 关于日期判断的部分主要是以下部
+                if ($cell->getDataType() == PHPExcel_Cell_DataType::TYPE_NUMERIC) {
+                    $cellstyleformat = $cell->getParent()->getStyle($cell->getCoordinate())->getNumberFormat();
+                    $formatcode = $cellstyleformat->getFormatCode();
+                    if (preg_match('/^(\[\$[A-Z]*-[0-9A-F]*\])*[hmsdy]/i', $formatcode)) {
+                        $value = gmdate("Y-m-d", PHPExcel_Shared_Date::ExcelToPHP($value));
+                    } else {
+                        $value = PHPExcel_Style_NumberFormat::toFormattedString($value, $formatcode);
+                    }
+                }
+                $excelData[$row][] = $value;
             }
         }
         return $excelData;
@@ -139,8 +151,19 @@ class Excel
         for ($row = 2; $row <= $highestRow; $row++) {
             $rowData = array();
             for ($column = 0; $column <= $highestColumnIndex; $column++) {
-                $val = $sheet->getCellByColumnAndRow($column, $row)->getValue();
-                $rowData[$column] = $val;
+                $cell = $sheet->getCellByColumnAndRow($column, $row);
+                $value = $cell->getValue();
+                //todo 关于日期判断的部分主要是以下部
+                if ($cell->getDataType() == PHPExcel_Cell_DataType::TYPE_NUMERIC) {
+                    $cellstyleformat = $cell->getParent()->getStyle($cell->getCoordinate())->getNumberFormat();
+                    $formatcode = $cellstyleformat->getFormatCode();
+                    if (preg_match('/^(\[\$[A-Z]*-[0-9A-F]*\])*[hmsdy]/i', $formatcode)) {
+                        $value = gmdate("Y-m-d", PHPExcel_Shared_Date::ExcelToPHP($value));
+                    } else {
+                        $value = PHPExcel_Style_NumberFormat::toFormattedString($value, $formatcode);
+                    }
+                }
+                $rowData[$column] = $value;
             }
             call_user_func($callback, $rowData);
         }
@@ -177,7 +200,7 @@ class Excel
                     $data_type = strtoupper($column['data_type']);
                     if ($data_type == 'IMAGE') { //添加图片
                         $format = in_array($column['source'], ['online', 'local']) ? $column['source'] : 'local';
-                        if ($format == 'local') {  //本地图片
+                        if ($format == 'local') { //本地图片
                             $objDrawing = new PHPExcel_Worksheet_Drawing();
                             if (is_file($value)) {
                                 $objDrawing->setPath($value); //写入图片路径
@@ -206,7 +229,7 @@ class Excel
                     $objActSheet->setCellValue($word . $i, $value);
                 }
                 //设置自动换行：前提是单元格内的值超列宽，或者在值内写入个\n
-                $objActSheet->getStyle($word . $i)->getAlignment()->setWrapText(true);//自动换行
+                $objActSheet->getStyle($word . $i)->getAlignment()->setWrapText(true); //自动换行
             }
         }
 
