@@ -97,47 +97,11 @@ class Excel
     }
 
     /**
-     * 读取Excel的数据并对数据进行操作：如入库，校验等
-     * param $callback 对数据进行操作的回调方法名
-     * param $filename 读取excel路径文件名
-     * param $reader_type 读取excel的类型
-     */
-    public function readDataCallBack($filename, callable $callback, $sheetIndex = 1) {
-        $reader_type = PHPExcel_IOFactory::identify($filename);
-        $reader = PHPExcel_IOFactory::createReader($reader_type);
-        $PHPExcel = $reader->load($filename); // 档案名称
-        $sheetIdx = max((int)$sheetIndex - 1, 0);
-        $sheet = $PHPExcel->getSheet($sheetIdx);
-        $highestRow = $sheet->getHighestRow(); // 取得总行数
-        $highestColumn = $sheet->getHighestColumn(); // 取得总列数
-        $highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
-        for ($row = 2; $row <= $highestRow; $row++) {
-            $rowData = array();
-            for ($column = 0; $column <= $highestColumnIndex; $column++) {
-                $cell = $sheet->getCellByColumnAndRow($column, $row);
-                $value = $cell->getValue();
-                //todo 关于日期判断的部分主要是以下部
-                if ($cell->getDataType() == PHPExcel_Cell_DataType::TYPE_NUMERIC) {
-                    $cellstyleformat = $cell->getParent()->getStyle($cell->getCoordinate())->getNumberFormat();
-                    $formatcode = $cellstyleformat->getFormatCode();
-                    if (preg_match('/^(\[\$[A-Z]*-[0-9A-F]*\])*[hmsdy]/i', $formatcode)) {
-                        $value = gmdate("Y-m-d", PHPExcel_Shared_Date::ExcelToPHP($value));
-                    } else {
-                        $value = PHPExcel_Style_NumberFormat::toFormattedString($value, $formatcode);
-                    }
-                }
-                $rowData[$column] = $value;
-            }
-            call_user_func($callback, $rowData);
-        }
-    }
-
-    /**
-     * 读取excel转换成数组
+     * 读取excel 指定的行数和列数 转换成数组
      *
      * @param string $excelFile 文件路径
-     * @param int $startRow 开始读取的行数
-     * @param int $endRow 读取的条数
+     * @param int    $startRow  开始读取的行数
+     * @param int    $chunkSize 读取的条数
      * @return array
      */
     public function readFilterData($excelFile, $startRow = 2, $chunkSize = 600, $sheetIndex = 1) {
