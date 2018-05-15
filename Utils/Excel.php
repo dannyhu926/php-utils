@@ -40,22 +40,6 @@ class Excel
         return self::$_instanceExcelObj;
     }
 
-    public static function getFile2ExcelType($file) {
-        $excel_type = 'Excel5';
-        $file_suffix = self::getFileSuffix($file);
-        if (array_key_exists($file_suffix, self::$filesuffix2excel)) {
-            $excel_type = self::$filesuffix2excel[$file_suffix];
-        }
-        return $excel_type;
-    }
-
-    //得到文件的后缀名
-    public static function getFileSuffix($file) {
-        $pics = explode('.', $file);
-        $num = count($pics);
-        return strtolower($pics[$num - 1]);
-    }
-
     /**
      * 生成Excel文件
      * param $outputFileName Excel文件名
@@ -76,7 +60,7 @@ class Excel
         header("Cache-Control:must-revalidate,post-check=0,pre-check=0");
         header("Pragma:no-cache");
         header("Content-Disposition:inline;filename={$outputFileName}");
-        $excel_type = self::getFile2ExcelType($outputFileName);
+        $excel_type = PHPExcel_IOFactory::identify($outputFileName);
         $objWriter = PHPExcel_IOFactory::createWriter($obj, $excel_type);
 
         if ($outputExplorer > 0) { //输出内容到浏览器
@@ -91,16 +75,11 @@ class Excel
      * 读取Excel的数据
      * param $callback 对数据进行操作的回调方法名
      * param $filename 读取excel路径文件名
-     * param $reader_type 读取excel的类型
      */
-    public function readData($filename, $sheetIndex = 1, $reader_type = '') {
-        if (empty($reader_type)) {
-            $reader_type = self::getFile2ExcelType($filename);
-        } elseif (!in_array($reader_type, self::$filesuffix2excel)) {
-            return array();
-        }
+    public function readData($filename, $sheetIndex = 1) {
+        $reader_type = PHPExcel_IOFactory::identify($filename);
         $objReader = PHPExcel_IOFactory::createReader($reader_type);
-        $objReader->setReadDataOnly(true);
+        $objReader->setReadDataOnly(true); //只读取数据，忽略里面各种格式等(对于Excel读去，有很大优化)
         $objPHPExcel = $objReader->load($filename);
         $sheetIdx = max((int)$sheetIndex - 1, 0);
         $objWorksheet = $objPHPExcel->getSheet($sheetIdx);
@@ -111,19 +90,7 @@ class Excel
         $excelData = array();
         for ($row = 1; $row <= $highestRow; $row++) {
             for ($col = 0; $col < $highestColumnIndex; $col++) {
-                $cell = $objWorksheet->getCellByColumnAndRow($col, $row);
-                $value = $cell->getValue();
-                //todo 关于日期判断的部分主要是以下部
-                if ($cell->getDataType() == PHPExcel_Cell_DataType::TYPE_NUMERIC) {
-                    $cellstyleformat = $cell->getParent()->getStyle($cell->getCoordinate())->getNumberFormat();
-                    $formatcode = $cellstyleformat->getFormatCode();
-                    if (preg_match('/^(\[\$[A-Z]*-[0-9A-F]*\])*[hmsdy]/i', $formatcode)) {
-                        $value = gmdate("Y-m-d", PHPExcel_Shared_Date::ExcelToPHP($value));
-                    } else {
-                        $value = PHPExcel_Style_NumberFormat::toFormattedString($value, $formatcode);
-                    }
-                }
-                $excelData[$row][] = $value;
+                $excelData[$row][] = (string)$objWorksheet->getCellByColumnAndRow($col, $row)->getValue();
             }
         }
         return $excelData;
@@ -135,12 +102,8 @@ class Excel
      * param $filename 读取excel路径文件名
      * param $reader_type 读取excel的类型
      */
-    public function readDataCallBack($filename, callable $callback, $sheetIndex = 1, $reader_type = '') {
-        if (empty($reader_type)) {
-            $reader_type = self::getFile2ExcelType($filename);
-        } elseif (!in_array($reader_type, self::$filesuffix2excel)) {
-            return array();
-        }
+    public function readDataCallBack($filename, callable $callback, $sheetIndex = 1) {
+        $reader_type = PHPExcel_IOFactory::identify($filename);
         $reader = PHPExcel_IOFactory::createReader($reader_type);
         $PHPExcel = $reader->load($filename); // 档案名称
         $sheetIdx = max((int)$sheetIndex - 1, 0);
@@ -167,6 +130,47 @@ class Excel
             }
             call_user_func($callback, $rowData);
         }
+    }
+
+    /**
+     * 读取excel转换成数组
+     *
+     * @param string $excelFile 文件路径
+     * @param int $startRow 开始读取的行数
+     * @param int $endRow 读取的条数
+     * @return array
+     */
+    public function readFilterData($excelFile, $startRow = 2, $chunkSize = 600, $sheetIndex = 1) {
+        $excelType = PHPExcel_IOFactory::identify($excelFile);
+        $excelReader = PHPExcel_IOFactory::createReader($excelType);
+        $chunkFilter = new ChunkReadFilter($startRow, $chunkSize);
+        $excelReader->setReadFilter($chunkFilter); // 设置实例化的过滤器对象
+        $phpexcel = $excelReader->load($excelFile);
+        $sheetIdx = max((int)$sheetIndex - 1, 0);
+        $activeSheet = $phpexcel->getSheet($sheetIdx);
+
+        $highestColumn = $activeSheet->getHighestColumn(); //最后列数所对应的字母，例如第1行就是A
+        $highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
+        $data = array();
+        $endRow = $startRow + $chunkSize;
+        for ($row = $startRow; $row <= $endRow; $row++) {
+            for ($col = 0; $col < $highestColumnIndex; $col++) {
+                $cell = $activeSheet->getCellByColumnAndRow($col, $row);
+                $value = $cell->getValue();
+                //todo 关于日期判断的部分主要是以下部
+                if ($cell->getDataType() == PHPExcel_Cell_DataType::TYPE_NUMERIC) {
+                    $cellstyleformat = $cell->getParent()->getStyle($cell->getCoordinate())->getNumberFormat();
+                    $formatcode = $cellstyleformat->getFormatCode();
+                    if (preg_match('/^(\[\$[A-Z]*-[0-9A-F]*\])*[hmsdy]/i', $formatcode)) {
+                        $value = gmdate("Y-m-d", PHPExcel_Shared_Date::ExcelToPHP($value));
+                    } else {
+                        $value = PHPExcel_Style_NumberFormat::toFormattedString($value, $formatcode);
+                    }
+                }
+                $data[$row][] = $value;
+            }
+        }
+        return $data;
     }
 
     /**
@@ -263,5 +267,30 @@ class Excel
         $objTitleFont = $objActSheetStyle->getFont();
         $objTitleFont->setSize(14);
         $objTitleFont->setBold(true);
+    }
+}
+
+/**
+ * 读取excel过滤器类 单独文件
+ */
+class ChunkReadFilter implements PHPExcel_Reader_IReadFilter
+{
+    private $_startRow = 0; // 开始行
+    private $_endRow = 0; // 结束行
+    private $_columns = []; // 列跨度
+    public function __construct($startRow, $chunkSize, $columns = []) {
+        $this->_startRow = $startRow;
+        $this->_endRow = $startRow + $chunkSize;
+        $this->_columns = $columns;
+    }
+
+    public function readCell($column, $row, $worksheetName = '') {
+        if ($row >= $this->_startRow && $row <= $this->_endRow) { //过滤行
+//            if (in_array($column,range('A','E'))) {
+            if ($this->_columns && in_array($column, $this->_columns)) { //过滤列
+                return true;
+            }
+        }
+        return false;
     }
 }
