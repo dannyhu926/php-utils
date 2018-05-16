@@ -205,10 +205,10 @@ class WaterMask
         if($this->srcImg_info){
             switch ($this->srcImg_info[2]) {
                 case 3:
-                    imagepng($this->im, $this->output_img);
+                    imagepng($this->im, $this->output_img, 80);
                     break 1;
                 case 2:
-                    imagejpeg($this->im, $this->output_img);
+                    imagejpeg($this->im, $this->output_img, 80);
                     break 1;
                 case 1:
                     imagegif($this->im, $this->output_img);
