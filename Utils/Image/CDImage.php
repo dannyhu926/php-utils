@@ -161,7 +161,7 @@ class CDImage
     
     public function convertType($type)
     {
-        if (!array_key_exists($key, self::$_createFunctions))
+        if (!array_key_exists($type, self::$_createFunctions))
             throw new Exception('不支持此类型', 0);
         $this->_imageType = $type;
     }
