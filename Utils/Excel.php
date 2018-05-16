@@ -94,6 +94,9 @@ class Excel
         for ($row = 1; $row <= $highestRow; $row++) {
             for ($col = 0; $col < $highestColumnIndex; $col++) {
                 $excelData[$row][$column_arr[$col]] = (string)$objWorksheet->getCellByColumnAndRow($col, $row)->getValue();
+                if (implode('', $excelData[$row]) == '') {
+                    unset($excelData[$row]);
+                }
             }
         }
         return $excelData;
@@ -142,6 +145,9 @@ class Excel
                     }
                 }
                 $data[$row][$column_arr[$col]] = $value;
+                if (implode('', $data[$row]) == '') {
+                    unset($data[$row]);
+                }
             }
         }
         return $data;
