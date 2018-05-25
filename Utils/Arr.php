@@ -126,29 +126,6 @@ class Arr
     }
 
     /**
-     * Fetch a flattened array of a nested array element.
-     * 获取多维数组的最终值，参数为 第一维的键.第二维的键.第三维的键.... 的形式
-     * @param array $array
-     * @param string $key
-     *
-     * @return array
-     */
-    public static function fetch($array, $key) {
-        $results = [];
-
-        foreach (explode('.', $key) as $segment) {
-            $results = [];
-            foreach ($array as $value) {
-                $value = (array)$value;
-                $results[] = $value[$segment];
-            }
-            $array = array_values($results);
-        }
-
-        return array_values($results);
-    }
-
-    /**
      * Return the first element in an array passing a given truth test.
      *
      * @param  array $array
