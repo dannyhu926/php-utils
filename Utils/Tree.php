@@ -282,7 +282,9 @@ class Tree
      * @param $currentlevel 计算当前层级，递归使用 适用改函数时不需要用该参数
      * @param $recursion 递归使用 外部调用时为FALSE
      */
-    public function getTreeView($myid, $effected_id = 'example', $str = "<span class='file'>\$name</span>", $str2 = "<span class='folder'>\$name</span>", $showlevel = 0, $style = 'filetree ', $currentlevel = 1, $recursion = FALSE) {
+    public function getTreeView($myid, $effected_id = 'example', $str1 = "<span class='file'>#name#</span>", $str2 = "<span class='folder'>#name#</span>", $showlevel = 0, $style = 'filetree', $currentlevel = 1, $recursion = FALSE) {
+        $str1 = str_replace("#name#", "$" . $this->param_name, $str1);
+        $str2 = str_replace("#name#", "$" . $this->param_name, $str2);
         $child = $this->getChild($myid);
         if (!defined('EFFECTED_INIT')) {
             $effected = ' id="' . $effected_id . '"';
@@ -303,12 +305,12 @@ class Tree
                 eval("\$nstr = \"$str2\";");
                 $this->str .= $nstr;
                 if ($showlevel == 0 || ($showlevel > 0 && $showlevel > $currentlevel)) {
-                    $this->getTreeView($id, $effected_id, $str, $str2, $showlevel, $style, $currentlevel + 1, TRUE);
+                    $this->getTreeView($id, $effected_id, $str1, $str2, $showlevel, $style, $currentlevel + 1, TRUE);
                 } elseif ($showlevel > 0 && $showlevel == $currentlevel) {
                     $this->str .= $placeholder;
                 }
             } else {
-                eval("\$nstr = \"$str\";");
+                eval("\$nstr = \"$str1\";");
                 $this->str .= $nstr;
             }
             $this->str .= $recursion ? '</li></ul>' : '</li>';
