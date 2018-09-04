@@ -322,6 +322,10 @@ class Tree
     }
 
     /**
+     * 输出树形结构
+     */
+
+    /**
      * 获取子栏目json
      * Enter description here ...
      * @param unknown_type $myid
@@ -330,23 +334,22 @@ class Tree
         $sub_cats = $this->getChild($myid);
         $n = 0;
         if (is_array($sub_cats)) foreach ($sub_cats as $c) {
-            $data[$n]['id'] = iconv(CHARSET, 'utf-8', $c['catid']);
-            if ($this->getChild($c['catid'])) {
+            $data[$n]['id'] = $c[$this->param_id];
+            if ($this->getChild($c[$this->param_id])) {
                 $data[$n]['liclass'] = 'hasChildren';
-                $data[$n]['children'] = array(array('text' => '&nbsp;', 'classes' => 'placeholder'));
+                $data[$n][$this->param_children] = array(array('text' => '&nbsp;', 'classes' => 'placeholder'));
                 $data[$n]['classes'] = 'folder';
-                $data[$n]['text'] = iconv(CHARSET, 'utf-8', $c['catname']);
+                $data[$n]['text'] = $c[$this->param_name];
             } else {
                 if ($str) {
-                    @extract(array_iconv($c, CHARSET, 'utf-8'));
+                    @extract($c);
                     eval("\$data[$n]['text'] = \"$str\";");
                 } else {
-                    $data[$n]['text'] = iconv(CHARSET, 'utf-8', $c['catname']);
+                    $data[$n]['text'] = $c[$this->param_name];
                 }
             }
             $n++;
         }
-
         return json_encode($data);
     }
 
