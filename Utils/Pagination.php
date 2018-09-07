@@ -87,6 +87,7 @@ class Pagination
      * @var string
      */
     public $currentPageClass = 'active';
+    public $pageClass = '';
     /**
      * 禁用的样式
      *
@@ -190,7 +191,7 @@ class Pagination
             }
         }
         for ($i = $startPage; $i <= $endPage; $i++) {
-            $style = $i == $this->page ? $this->currentPageClass : '';
+            $style = $i == $this->page ? $this->currentPageClass : $this->pageClass;
             $url = $this->getUrl($i);
             $pages .= $this->getLink($i, $url, $style);
         }
