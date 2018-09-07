@@ -59,40 +59,46 @@ class Pagination
      * @var string
      */
     public $firstPageText = '首页';
-    public $firstPageClass = 'class="first"';
+    public $firstPageClass = 'first';
     /**
      * 尾页显示文字
      *
      * @var string
      */
     public $lastPageText = '尾页';
-    public $lastPageClass = 'class="last"';
+    public $lastPageClass = 'last';
     /**
      * 下一页显示文字
      *
      * @var string
      */
     public $prevPageText = '上一页';
-    public $prevPageClass = 'class="previous"';
+    public $prevPageClass = 'previous';
     /**
      * 上一页显示文字
      *
      * @var string
      */
     public $nextPageText = '下一页';
-    public $nextPageClass = 'class="next"';
+    public $nextPageClass = 'next';
     /**
      * 当前页码样式
      *
      * @var string
      */
-    public $currentPageStyle = 'class="active"';
+    public $currentPageClass = 'active';
+    /**
+     * 禁用的样式
+     *
+     * @var string
+     */
+    public $disabledPageClass = 'disabled';
     /**
      * 链接模板
      *
      * @var string
      */
-    public $linkTpl = '<li {attributes}><a{href}>{text}</a></li>';
+    public $linkTpl = '<li class="{attributes}"><a{href}>{text}</a></li>';
     /**
      * 分页显示模板
      *
@@ -162,7 +168,6 @@ class Pagination
         );
 
         $html = str_replace($search, $replace, $this->htmlTpl);
-
         return $html;
     }
 
@@ -185,7 +190,7 @@ class Pagination
             }
         }
         for ($i = $startPage; $i <= $endPage; $i++) {
-            $style = $i == $this->page ? $this->currentPageStyle : '';
+            $style = $i == $this->page ? $this->currentPageClass : '';
             $url = $this->getUrl($i);
             $pages .= $this->getLink($i, $url, $style);
         }
@@ -200,7 +205,11 @@ class Pagination
      * @return mixed
      */
     public function getFirstPageLink($pageCount) {
-        $firstPageUrl = $pageCount ? $this->getUrl(1) : '';
+        $firstPageUrl = $this->getUrl(1);
+        if (1 == $this->page) {
+            $firstPageUrl = '';
+            $this->firstPageClass = $this->firstPageClass . " " . $this->disabledPageClass;
+        }
 
         return $this->getLink($this->firstPageText, $firstPageUrl, $this->firstPageClass);
     }
@@ -212,7 +221,11 @@ class Pagination
      * @return mixed
      */
     public function getLastPageLink($pageCount) {
-        $lastPageUrl = $pageCount ? $this->getUrl($pageCount) : '';
+        $lastPageUrl = $this->getUrl($pageCount);
+        if ($pageCount == $this->page) {
+            $lastPageUrl = '';
+            $this->lastPageClass = $this->lastPageClass . " " . $this->disabledPageClass;
+        }
 
         return $this->getLink($this->lastPageText, $lastPageUrl, $this->lastPageClass);
     }
@@ -225,8 +238,12 @@ class Pagination
      */
     public function getPrevPageLink($pageCount) {
         $prevPageNumber = $this->page - 1;
-        $prevPageUrl = $prevPageNumber > 0 && $pageCount ? $this->getUrl($prevPageNumber) : '';
-
+        $prevPageUrl = '';
+        if ($prevPageNumber > 0 && $pageCount) {
+            $prevPageUrl = $this->getUrl($prevPageNumber);
+        } else {
+            $this->prevPageClass = $this->prevPageClass . " " . $this->disabledPageClass;
+        }
         return $this->getLink($this->prevPageText, $prevPageUrl, $this->prevPageClass);
     }
 
@@ -238,8 +255,12 @@ class Pagination
      */
     public function getNextPageLink($pageCount) {
         $nextPageNumber = $this->page + 1;
-        $nextPageUrl = $nextPageNumber <= $pageCount && $pageCount ? $this->getUrl($nextPageNumber) : '';
-
+        $nextPageUrl = '';
+        if ($nextPageNumber <= $pageCount && $pageCount) {
+            $nextPageUrl = $this->getUrl($nextPageNumber);
+        } else {
+            $this->nextPageClass = $this->nextPageClass . " " . $this->disabledPageClass;
+        }
         return $this->getLink($this->nextPageText, $nextPageUrl, $this->nextPageClass);
     }
 
@@ -259,10 +280,9 @@ class Pagination
                 $attributes = ' ' . $style . $_attrOnClick . ' ';
             } else {
                 $href = ' href="' . $url . '" ';
-                $attributes = ' ' . $style . ' ';
+                $attributes = $style;
             }
         } else {
-
             $href = '';
             $attributes = $style;
         }
@@ -277,8 +297,8 @@ class Pagination
             $href,
             $attributes
         );
-        $link = str_replace($search, $replace, $this->linkTpl);
 
+        $link = str_replace($search, $replace, $this->linkTpl);
         return $link;
     }
 
