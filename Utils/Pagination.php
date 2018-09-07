@@ -132,8 +132,7 @@ class Pagination
 
     /**
      * 显示分页
-     *
-     * @return mixed
+     * 当前第1/453页 [首页] [上页] 1 2 3 4 5 6 7 8 9 10 [下页] [尾页]
      */
     public function show() {
         $this->page = max(1, $this->page);
