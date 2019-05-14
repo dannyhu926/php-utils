@@ -142,4 +142,21 @@ class IP
 
         return long2ip($mask);
     }
+
+	/**
+     * 验证ip是否是内网ip
+     *
+     * @return bool
+     */
+    public static function checkIntranet()
+    {
+        $result = false;
+
+        $clientIp = static::getRemote();
+        if (!filter_var($clientIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            $result = true;
+        }
+
+        return $result;
+    }
 }
