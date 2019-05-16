@@ -543,20 +543,16 @@ class Str
      */
     public static function parseLines($text, $toAssoc = true) {
         $text = htmlspecialchars_decode($text);
-        $text = self::clean($text, false, false);
-
+        $text = self::clean($text, false, false, false);
         $text = str_replace(array("\n", "\r", "\r\n", PHP_EOL), "\n", $text);
         $lines = explode("\n", $text);
-
         $result = array();
         if (!empty($lines)) {
             foreach ($lines as $line) {
                 $line = trim($line);
-
                 if ($line === '') {
                     continue;
                 }
-
                 if ($toAssoc) {
                     $result[$line] = $line;
                 } else {
@@ -564,7 +560,6 @@ class Str
                 }
             }
         }
-
         return $result;
     }
 
@@ -573,16 +568,19 @@ class Str
      * - Remove UTF-8 chars
      * - Remove all tags
      * - Trim
-     * - Addslashes (opt)
+     * - Add Slashes (opt)
      * - To lower (opt)
      *
      * @param string $string
-     * @param bool $toLower
-     * @param bool $addslashes
+     * @param bool   $toLower
+     * @param bool   $addSlashes
+     * @param bool   $removeAccents
      * @return string
      */
-    public static function clean($string, $toLower = false, $addslashes = false) {
-        $string = Slug::removeAccents($string);
+    public static function clean($string, $toLower = false, $addslashes = false, $removeAccents = true) {
+        if($removeAccents){
+            $string = Slug::removeAccents($string);
+        }
         $string = strip_tags($string);
         $string = trim($string);
 
