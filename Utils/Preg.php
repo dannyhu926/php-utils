@@ -16,9 +16,10 @@ class Preg
      *
      * @param  string $string
      * @param  int $length
+     * @param  int $index
      * @return array
      */
-    public static function getStringNumber($string, $length = 6)
+    public static function getStringNumber($string, $index = -1, $length = 6)
     {
         $arrMatches = [];
 
@@ -27,6 +28,9 @@ class Preg
             preg_match_all($rule, $string, $arrMatches);
             if ($arrMatches) {
                 $arrMatches = $arrMatches['0'];
+                if (isset($arrMatches[$index])) {
+                    $arrMatches = $arrMatches[$index];
+                }
             }
         }
 
@@ -37,9 +41,10 @@ class Preg
      * 得到字符串中【】里面的内容
      *
      * @param string $string
+     * @param int $index
      * return array
      */
-    public static function getBracketsString($string)
+    public static function getBracketsString($string, $index = -1)
     {
         $arrMatches = [];
 
@@ -47,6 +52,9 @@ class Preg
             preg_match_all("/(?<=【)[^】]+/", $string, $arrMatches);
             if ($arrMatches) {
                 $arrMatches = $arrMatches['0'];
+                if (isset($arrMatches[$index])) {
+                    $arrMatches = $arrMatches[$index];
+                }
             }
         }
 
