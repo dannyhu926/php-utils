@@ -23,7 +23,8 @@ class Preg
         $arrMatches = [];
 
         if (!empty($string)) {
-            preg_match_all("/([0-9]{$length})/", $string, $arrMatches);
+            $rule = sprintf("/([0-9]{%s})/", $length);
+            preg_match_all($rule, $string, $arrMatches);
             if ($arrMatches) {
                 $arrMatches = $arrMatches['0'];
             }
