@@ -60,4 +60,65 @@ class Preg
 
         return $arrMatches;
     }
+
+    /**
+     * 获得<title></title>中的数据
+     * @param  $string
+     * @param  $tag
+     * @param  int $index
+     * @return array
+     */
+    public static function getTagData($string, $tag, $index = -1)
+    {
+        $arrMatches = [];
+
+        if (!empty($string)) {
+            preg_match_all("/<($tag.*?)>(.*?)<(\/$tag.*?)>/si", $string, $arrMatches);
+            if ($arrMatches) {
+                $arrMatches = $arrMatches['2'];
+                if (isset($arrMatches[$index])) {
+                    $arrMatches = $arrMatches[$index];
+                }
+            }
+        }
+
+        return $arrMatches;
+    }
+
+    /**
+     * 相对路径转化成绝对路径
+     * @param $content
+     * @param $feed_url http://www.test.com
+     * @param array $tags 转换的标签
+     * @return null|string|string[]
+     */
+    public static function relative2Absolute($content, $feed_url, $tags = [ 'href', 'src' ])
+    {
+        preg_match('/(http|https|ftp):\/\//', $feed_url, $protocol);
+        $server_url = preg_replace("/(http|https|ftp|news):\/\//", "", $feed_url);
+        $server_url = preg_replace("/\/.*/", "", $server_url);
+        
+        if ($server_url == '') {
+            return $content;
+        }
+
+        if (isset($protocol[0])) {
+            foreach ($tags as $tag) {
+                $content = preg_replace('/'.$tag.'="\//', $tag.'="'.$protocol[0].$server_url.'/', $content);
+                $content = preg_replace("/$tag='\//", $tag.'=\''.$protocol[0].$server_url.'/', $content);
+            }
+        }
+        return $content;
+    }
+
+    /**
+     * 取得所有链接
+     * @param $content
+     * @return array
+     */
+    public static function getAllUrl($content)
+    {
+        preg_match_all('/<a\s+href=["|\']?([^>"\' ]+)["|\']?\s*[^>]*>([^>]+)<\/a>/i', $content, $arr);
+        return array( 'name' => $arr[2], 'url' => $arr[1] );
+    }
 }
