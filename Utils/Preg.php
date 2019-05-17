@@ -38,20 +38,34 @@ class Preg
     }
 
     /**
-     * 得到字符串中【】里面的内容
-     *
-     * @param string $string
+     * 得到字符串中括号里面的内容
+     * @param $string
+     * @param string $type curves：小括号 brackets：中括号 brace：大括号 square:方括号
      * @param int $index
-     * return array
+     * @return array|mixed
      */
-    public static function getBracketsString($string, $index = -1)
+    public static function getBracketsString($string, $type = "curves", $index = -1)
     {
         $arrMatches = [];
 
         if (!empty($string)) {
-            preg_match_all("/(?<=【)[^】]+/", $string, $arrMatches);
+            switch ($type) {
+                case 'curves':
+                    $rule = "/(\(|（)(.*?)(\)|）)/";
+                    break;
+                case 'brackets':
+                    $rule = "/(《|<)(.*?)(>|》)/";
+                    break;
+                case 'brace':
+                    $rule = "/(\{)(.*?)(\})/";
+                    break;
+                case 'square':
+                    $rule = "/(\[|【)(.*?)(\]|】)/";
+                    break;
+            }
+            preg_match_all($rule, $string, $arrMatches);
             if ($arrMatches) {
-                $arrMatches = $arrMatches['0'];
+                $arrMatches = $arrMatches['2'];
                 if (isset($arrMatches[$index])) {
                     $arrMatches = $arrMatches[$index];
                 }
@@ -97,7 +111,7 @@ class Preg
         preg_match('/(http|https|ftp):\/\//', $feed_url, $protocol);
         $server_url = preg_replace("/(http|https|ftp|news):\/\//", "", $feed_url);
         $server_url = preg_replace("/\/.*/", "", $server_url);
-        
+
         if ($server_url == '') {
             return $content;
         }
