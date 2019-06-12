@@ -364,7 +364,15 @@ class Url
         if (Arr::key('HTTPS', $_SERVER)) {
             return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
         }
-
+        if (Arr::key('REQUEST_SCHEME', $_SERVER)) {
+            return !empty($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] == 'https';
+        }
+        if (Arr::key('HTTP_X_FORWARDED_PROTO', $_SERVER)) {
+            return !empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https';
+        }
+        if (Arr::key('HTTP_FRONT_END_HTTPS', $_SERVER)) {
+            return !empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) !== 'off';
+        }
         if ($trustProxyHeaders && Arr::key('X-FORWARDED-PROTO', $_SERVER)) {
             return $_SERVER['X-FORWARDED-PROTO'] === 'https';
         }

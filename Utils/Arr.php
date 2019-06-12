@@ -113,7 +113,7 @@ class Arr
 
     /**
      * Determine if the given key exists in the provided array.
-     *
+     * 确定给定的键是否存在于提供的数组中。
      * @param  \ArrayAccess|array $array
      * @param  string|int $key
      * @return bool
