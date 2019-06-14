@@ -2,6 +2,7 @@
     "name": "hudy/utils",
     "description": "php",
     "require": {
-	    "automattic/php-thrift-sql": "^0.2.1"
+	    "automattic/php-thrift-sql": "^0.2.1",
+		"phpoffice/phpspreadsheet": "^1.6"
 	}
 }
