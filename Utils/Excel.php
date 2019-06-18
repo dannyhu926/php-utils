@@ -5,12 +5,12 @@ namespace Utils;
  * @author        dannyhu
  * Excel          导出导入数据类
  * $excelUtils =  Excel::getInstance();
- * $objPHPExcel = Excel::createObjPHPExcel();
+ * $objPHPExcel = Excel::_instanceExcelObj;
  */
 class Excel
 {
     private static $_instanceObj = null;
-    private static $_instanceExcelObj = null;
+    public static $_instanceExcelObj = null;
 
     public function __construct() {
         /*导入phpExcel核心类  */
@@ -23,18 +23,10 @@ class Excel
     public static function getInstance() {
         if (self::$_instanceObj == null) {
             self::$_instanceObj = new self();
+			self::$_instanceExcelObj = new PHPExcel();
         }
         return self::$_instanceObj;
     }
-
-    //得到Excel对象
-    public static function createObjPHPExcel() {
-        if (self::$_instanceExcelObj == null) {
-            self::$_instanceExcelObj = new PHPExcel();
-        }
-        return self::$_instanceExcelObj;
-    }
-
 
     /**
      * 生成Excel文件
@@ -247,6 +239,8 @@ class Excel
         $objTitleFont = $objActSheetStyle->getFont();
         $objTitleFont->setSize(14);
         $objTitleFont->setBold(true);
+
+		return $i;
     }
 }
 
