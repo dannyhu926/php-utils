@@ -228,8 +228,7 @@ class Excel
         //默认列宽
         $objActSheet->getDefaultColumnDimension()->setWidth(20);
 
-        //设置当前活动sheet的名称和表格标题
-        $objActSheet->setTitle($sheet_title);
+        //设置表格标题
         $objActSheet->mergeCells("{$firstWord}2:{$maxWord}2");
         $objActSheet->setCellValue("{$firstWord}2", $sheet_title);
         $objActSheetStyle = $objActSheet->getStyle("{$firstWord}2");
