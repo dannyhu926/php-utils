@@ -34,8 +34,7 @@ class Excel
      * param $outputExplorer 浏览器输出或文件输出
      */
     public function generatedFile($outputFileName, $outputExplorer = 1) {
-        $obj = self::createObjPHPExcel();
-
+        $obj = self::$_instanceExcelObj;
         $obj->setActiveSheetIndex(0);
         //页眉页脚
         $obj->getActiveSheet()->getHeaderFooter()->setOddHeader('&L&BPersonal cash register&RPrinted on &D');
@@ -155,7 +154,7 @@ class Excel
      */
     public function pushData(Array $list, Array $columns, $sheet_title) {
         if (empty($columns)) return false;
-        $objExcel = self::createObjPHPExcel();
+        $objExcel = self::$_instanceExcelObj;
         $objActSheet = $objExcel->getActiveSheet();
 
         //todo excel表头
