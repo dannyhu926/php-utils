@@ -21,9 +21,9 @@ class Excel
     }
 
     public static function getInstance() {
-        if (self::$_instanceObj == null) {
+        if (!(self::$_instanceObj instanceof self) || self::$_instanceObj == null) {
             self::$_instanceObj = new self();
-			self::$_instanceExcelObj = new PHPExcel();
+            self::$_instanceExcelObj = new PHPExcel();
         }
         return self::$_instanceObj;
     }
@@ -44,19 +44,19 @@ class Excel
         // 设置页方向和规模
         $obj->getActiveSheet()->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_PORTRAIT);
         $obj->getActiveSheet()->getPageSetup()->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
-        header('Content-Type: application/vnd.ms-excel;charset=UTF-8');
-        header("Cache-Control:must-revalidate,post-check=0,pre-check=0");
-        header("Pragma:no-cache");
-        header("Content-Disposition:inline;filename={$outputFileName}");
+
         $excel_type = PHPExcel_IOFactory::identify($outputFileName);
         $objWriter = PHPExcel_IOFactory::createWriter($obj, $excel_type);
-
         if ($outputExplorer > 0) { //输出内容到浏览器
+		    header('Content-Type: application/vnd.ms-excel;charset=UTF-8');
+			header("Cache-Control:must-revalidate,post-check=0,pre-check=0");
+			header("Pragma:no-cache");
+			header("Content-Disposition:inline;filename={$outputFileName}");
             $objWriter->save('php://output');
+			exit;
         } else { //输出内容到文件通过文件路径再用Ajax无刷新页面
             $objWriter->save("{$outputFileName}");
         }
-        exit;
     }
 
     /**
@@ -163,6 +163,7 @@ class Excel
         foreach ($columns as $key => $column) {
             $word = PHPExcel_Cell::stringFromColumnIndex($key + 1);
             $objActSheet->setCellValue($word . $i, $column['title']);
+			$objActSheet->getStyle($word.$i)->getFont()->setBold(true);
         }
 
         //todo excel内容
