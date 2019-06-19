@@ -9,6 +9,8 @@ namespace Utils;
  */
 class Excel
 {
+	const PASSWORD = 'admin';
+
     private static $_instanceObj = null;
     public static $_instanceExcelObj = null;
 
@@ -241,9 +243,10 @@ class Excel
         $objTitleFont->setSize(14);
         $objTitleFont->setBold(true);
 
-		$objActSheet->getProtection()->setPassword('admin');//设置保护密码
+		$objActSheet->getProtection()->setPassword(self::PASSWORD);//设置保护密码
 		$objActSheet->getProtection()->setSheet(true);
 		$objActSheet->protectCells("{$firstWord}2:{$maxWord}{$i}");
+
 		return $i;
     }
 }
