@@ -52,6 +52,8 @@ class Excel
 			header("Pragma:no-cache");
 			header("Content-Disposition:inline;filename={$outputFileName}");
             $objWriter->save('php://output');
+			$obj->disconnectWorksheets();
+			unset($obj);
 			exit;
         } else { //输出内容到文件通过文件路径再用Ajax无刷新页面
             $objWriter->save("{$outputFileName}");
@@ -239,6 +241,9 @@ class Excel
         $objTitleFont->setSize(14);
         $objTitleFont->setBold(true);
 
+		$objActSheet->getProtection()->setPassword('admin');//设置保护密码
+		$objActSheet->getProtection()->setSheet(true);
+		$objActSheet->protectCells("{$firstWord}2:{$maxWord}{$i}");
 		return $i;
     }
 }
