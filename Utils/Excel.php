@@ -157,7 +157,7 @@ class Excel
      * 填充Excel列数据
      * param $list 数据列表
      * param $columns Excel表头数据 $columns = array(
-     *   array('field' => 'name', 'title' => '姓名', 'data_type'=>'string','format'=>PHPExcel_Cell_DataType::TYPE_STRING),
+     *   array('field' => 'name', 'title' => '姓名', 'options' => ['data_type' => 'number', 'format' => '0.000'] ),
      *   array('field' => 'list数组元素键值', 'title' => 'B列Excel表头的标题内容'),
      * );
      */
@@ -182,11 +182,11 @@ class Excel
             foreach ($columns as $key => $column) {
                 $word = PHPExcel_Cell::stringFromColumnIndex($key + 1);
                 $value = $info[$column['field']];
-
-                if (isset($column['data_type'])) {
-                    $data_type = strtoupper($column['data_type']);
-                    if ($data_type == 'IMAGE') { //添加图片
-                        $format = in_array($column['source'], ['online', 'local']) ? $column['source'] : 'local';
+                if (isset($column['options']['data_type'])) {
+                    $dataType = strtoupper($column['options']['data_type']);
+					$format = isset($column['options']['format'])? $column['options']['format'] : '';
+                    if ($dataType == 'IMAGE') { //添加图片
+                        $format = in_array($format, ['online', 'local']) ? $format : 'local';
                         if ($format == 'local') { //本地图片
                             $objDrawing = new PHPExcel_Worksheet_Drawing();
                             if (is_file($value)) {
@@ -204,12 +204,12 @@ class Excel
                         //设置表格宽度覆盖默认设置
                         $objActSheet->getColumnDimension($word)->setWidth(100);
                         $objActSheet->getRowDimension($i)->setRowHeight(30);
-                    } elseif ($data_type == 'NUMBER') { //日期，数字，百分比，金额
+                    } elseif ($dataType == 'NUMBER') { //日期，数字，百分比，金额
                         $objActSheet->setCellValue($word . $i, $value);
-                        $format = isset($column['format']) ? $column['format'] : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
+                        $format = $format ? $format : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
                         $objActSheet->getStyle($word . $i)->getNumberFormat()->setFormatCode($format);
-                    } elseif ($data_type == 'STRING') {
-                        $format = isset($column['format']) ? $column['format'] : PHPExcel_Cell_DataType::TYPE_STRING;
+                    } elseif ($dataType == 'STRING') {
+                        $format = $format ? $format : PHPExcel_Cell_DataType::TYPE_STRING;
                         $objActSheet->setCellValueExplicit($word . $i, $value, $format);
                     }
                 } else {
