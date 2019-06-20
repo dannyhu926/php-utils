@@ -68,9 +68,9 @@ class Excel
             exit;
         } else { //输出内容到文件通过文件路径再用Ajax无刷新页面
             $objWriter->save("{$outputFileName}");
+            unset($obj);
+            exit;
         }
-        $obj->disconnectWorksheets();
-        unset($obj);
     }
 
     /**
@@ -194,7 +194,7 @@ class Excel
                 if (isset($column['options']['data_type'])) {
                     $dataType = strtoupper($column['options']['data_type']);
                     $format = isset($column['options']['format']) ? $column['options']['format'] : '';
-                    if ($dataType == 'IMAGE') { 
+                    if ($dataType == 'IMAGE') {
                         $format = in_array($format, [ 'online', 'local' ]) ? $format : 'local';
                         if ($format == 'local') { //本地图片
                             $objDrawing = new PHPExcel_Worksheet_Drawing();
