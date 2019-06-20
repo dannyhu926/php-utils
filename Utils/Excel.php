@@ -1,4 +1,5 @@
 <?php
+
 namespace Utils;
 
 /**
@@ -9,12 +10,13 @@ namespace Utils;
  */
 class Excel
 {
-	const PASSWORD = 'admin';
+    const PASSWORD = 'admin';
 
     private static $_instanceObj = null;
     private $excelObj = null;
 
-    public function __construct() {
+    public function __construct()
+    {
         /*导入phpExcel核心类  */
         include_once('Excel/PHPExcel.php');
         include_once('Excel/PHPExcel/Writer/Excel2007.php'); //用于其他低版本xls
@@ -22,28 +24,32 @@ class Excel
         include_once('Excel/PHPExcel/IOFactory.php');
     }
 
-    public static function getInstance() {
+    public static function getInstance()
+    {
         if (!(self::$_instanceObj instanceof self) || self::$_instanceObj == null) {
             self::$_instanceObj = new self();
         }
         return self::$_instanceObj;
     }
 
-    public function getExcel() {
+    public function getExcel()
+    {
         $this->excelObj = new PHPExcel();
         return $this->excelObj;
     }
+
     /**
      * 生成Excel文件
      * param $outputFileName Excel文件名
      * param $outputExplorer 浏览器输出或文件输出
      */
-    public function generatedFile($outputFileName, $outputExplorer = 1) {
+    public function generatedFile($outputFileName, $outputExplorer = 1)
+    {
         $obj = $this->excelObj;
         $obj->setActiveSheetIndex(0);
         //页眉页脚
         $obj->getActiveSheet()->getHeaderFooter()->setOddHeader('&L&BPersonal cash register&RPrinted on &D');
-        $obj->getActiveSheet()->getHeaderFooter()->setOddFooter('&L&B' . $obj->getProperties()->getTitle() . '&RPage &P of &N');
+        $obj->getActiveSheet()->getHeaderFooter()->setOddFooter('&L&B'.$obj->getProperties()->getTitle().'&RPage &P of &N');
 
         // 设置页方向和规模
         $obj->getActiveSheet()->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_PORTRAIT);
@@ -52,28 +58,29 @@ class Excel
         $excel_type = PHPExcel_IOFactory::identify($outputFileName);
         $objWriter = PHPExcel_IOFactory::createWriter($obj, $excel_type);
         if ($outputExplorer > 0) { //输出内容到浏览器
-		    header('Content-Type: application/vnd.ms-excel;charset=UTF-8');
-			header("Cache-Control:must-revalidate,post-check=0,pre-check=0");
-			header("Pragma:no-cache");
-			header("Content-Disposition:inline;filename={$outputFileName}");
+            header('Content-Type: application/vnd.ms-excel;charset=UTF-8');
+            header("Cache-Control:must-revalidate,post-check=0,pre-check=0");
+            header("Pragma:no-cache");
+            header("Content-Disposition:inline;filename={$outputFileName}");
             $objWriter->save('php://output');
-			$obj->disconnectWorksheets();
-			unset($obj);
-			exit;
+            $obj->disconnectWorksheets();
+            unset($obj);
+            exit;
         } else { //输出内容到文件通过文件路径再用Ajax无刷新页面
             $objWriter->save("{$outputFileName}");
         }
-		$obj->disconnectWorksheets();
+        $obj->disconnectWorksheets();
         unset($obj);
     }
 
     /**
      * 读取Excel的数据
-     * @param $callback 对数据进行操作的回调方法名
+     * @param        $callback   对数据进行操作的回调方法名
      * @param string $column_arr 文件路径 eg:['id', 'phone', 'province', 'city', 'operators', 'area_code', 'post_code'];
-     * @param $filename 读取excel路径文件名
+     * @param        $filename   读取excel路径文件名
      */
-    public function readData($filename, $column_arr, $sheetIndex = 1) {
+    public function readData($filename, $column_arr, $sheetIndex = 1)
+    {
         $reader_type = PHPExcel_IOFactory::identify($filename);
         $objReader = PHPExcel_IOFactory::createReader($reader_type);
         if ($reader_type == "CSV") {
@@ -81,7 +88,7 @@ class Excel
         }
         $objReader->setReadDataOnly(true); //只读取数据，忽略里面各种格式等(对于Excel读去，有很大优化)
         $objPHPExcel = $objReader->load($filename);
-        $sheetIdx = max((int)$sheetIndex - 1, 0);
+        $sheetIdx = max((int) $sheetIndex - 1, 0);
         $objWorksheet = $objPHPExcel->getSheet($sheetIdx);
 
         $highestRow = $objWorksheet->getHighestRow(); // 取得总行数
@@ -93,7 +100,7 @@ class Excel
         $excelData = array();
         for ($row = 1; $row <= $highestRow; $row++) {
             for ($col = 0; $col < $highestColumnIndex; $col++) {
-                $excelData[$row][$column_arr[$col]] = (string)$objWorksheet->getCellByColumnAndRow($col, $row)->getValue();
+                $excelData[$row][$column_arr[$col]] = (string) $objWorksheet->getCellByColumnAndRow($col, $row)->getValue();
             }
             if (implode('', $excelData[$row]) == '') {
                 unset($excelData[$row]);
@@ -105,13 +112,14 @@ class Excel
     /**
      * 读取excel 指定的行数和列数 转换成数组
      *
-     * @param string $excelFile 文件路径
+     * @param string $excelFile  文件路径
      * @param string $column_arr 文件路径 eg:['id', 'phone', 'province', 'city', 'operators', 'area_code', 'post_code'];
-     * @param int    $startRow  开始读取的行数
-     * @param int    $chunkSize 读取的条数
+     * @param int    $startRow   开始读取的行数
+     * @param int    $chunkSize  读取的条数
      * @return array
      */
-    public function readFilterData($excelFile, $column_arr, $startRow = 2, $chunkSize = 600, $sheetIndex = 1) {
+    public function readFilterData($excelFile, $column_arr, $startRow = 2, $chunkSize = 600, $sheetIndex = 1)
+    {
         $excelType = PHPExcel_IOFactory::identify($excelFile);
         $excelReader = PHPExcel_IOFactory::createReader($excelType);
         if ($excelType == "CSV") {
@@ -120,7 +128,7 @@ class Excel
         $chunkFilter = new ChunkReadFilter($startRow, $chunkSize);
         $excelReader->setReadFilter($chunkFilter); // 设置实例化的过滤器对象
         $phpexcel = $excelReader->load($excelFile);
-        $sheetIdx = max((int)$sheetIndex - 1, 0);
+        $sheetIdx = max((int) $sheetIndex - 1, 0);
         $activeSheet = $phpexcel->getSheet($sheetIdx);
 
         $highestColumn = $activeSheet->getHighestColumn(); //最后列数所对应的字母，例如第1行就是A
@@ -161,7 +169,8 @@ class Excel
      *   array('field' => 'list数组元素键值', 'title' => 'B列Excel表头的标题内容'),
      * );
      */
-    public function pushData(Array $list, Array $columns, $sheet_title) {
+    public function pushData(Array $list, Array $columns, $sheet_title)
+    {
         if (empty($columns) || empty($this->excelObj)) {
             return false;
         }
@@ -172,8 +181,8 @@ class Excel
         $i = 3;
         foreach ($columns as $key => $column) {
             $word = PHPExcel_Cell::stringFromColumnIndex($key + 1);
-            $objActSheet->setCellValue($word . $i, $column['title']);
-			$objActSheet->getStyle($word.$i)->getFont()->setBold(true);
+            $objActSheet->setCellValue($word.$i, $column['title']);
+            $objActSheet->getStyle($word.$i)->getFont()->setBold(true);
         }
 
         //todo excel内容
@@ -184,9 +193,9 @@ class Excel
                 $value = $info[$column['field']];
                 if (isset($column['options']['data_type'])) {
                     $dataType = strtoupper($column['options']['data_type']);
-					$format = isset($column['options']['format'])? $column['options']['format'] : '';
-                    if ($dataType == 'IMAGE') { //添加图片
-                        $format = in_array($format, ['online', 'local']) ? $format : 'local';
+                    $format = isset($column['options']['format']) ? $column['options']['format'] : '';
+                    if ($dataType == 'IMAGE') { 
+                        $format = in_array($format, [ 'online', 'local' ]) ? $format : 'local';
                         if ($format == 'local') { //本地图片
                             $objDrawing = new PHPExcel_Worksheet_Drawing();
                             if (is_file($value)) {
@@ -198,25 +207,25 @@ class Excel
                         } else {
                             continue;
                         }
-                        $objDrawing->setCoordinates($word . $i); /*设置图片要插入的单元格*/
+                        $objDrawing->setCoordinates($word.$i); /*设置图片要插入的单元格*/
                         $objDrawing->setWidthAndHeight(100, 30);
                         $objDrawing->setWorksheet($objActSheet);
                         //设置表格宽度覆盖默认设置
                         $objActSheet->getColumnDimension($word)->setWidth(100);
                         $objActSheet->getRowDimension($i)->setRowHeight(30);
                     } elseif ($dataType == 'NUMBER') { //日期，数字，百分比，金额
-                        $objActSheet->setCellValue($word . $i, $value);
+                        $objActSheet->setCellValue($word.$i, $value);
                         $format = $format ? $format : PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
-                        $objActSheet->getStyle($word . $i)->getNumberFormat()->setFormatCode($format);
+                        $objActSheet->getStyle($word.$i)->getNumberFormat()->setFormatCode($format);
                     } elseif ($dataType == 'STRING') {
                         $format = $format ? $format : PHPExcel_Cell_DataType::TYPE_STRING;
-                        $objActSheet->setCellValueExplicit($word . $i, $value, $format);
+                        $objActSheet->setCellValueExplicit($word.$i, $value, $format);
                     }
                 } else {
-                    $objActSheet->setCellValue($word . $i, $value);
+                    $objActSheet->setCellValue($word.$i, $value);
                 }
                 //设置自动换行：前提是单元格内的值超列宽，或者在值内写入个\n
-                $objActSheet->getStyle($word . $i)->getAlignment()->setWrapText(true); //自动换行
+                $objActSheet->getStyle($word.$i)->getAlignment()->setWrapText(true); //自动换行
             }
         }
 
@@ -224,10 +233,10 @@ class Excel
         $style_obj = new PHPExcel_Style();
         $style_array = array(
             'borders' => array( //上下左右画线
-                'top' => array('style' => PHPExcel_Style_Border::BORDER_THIN),
-                'left' => array('style' => PHPExcel_Style_Border::BORDER_THIN),
-                'bottom' => array('style' => PHPExcel_Style_Border::BORDER_THIN),
-                'right' => array('style' => PHPExcel_Style_Border::BORDER_THIN)
+                'top' => array( 'style' => PHPExcel_Style_Border::BORDER_THIN ),
+                'left' => array( 'style' => PHPExcel_Style_Border::BORDER_THIN ),
+                'bottom' => array( 'style' => PHPExcel_Style_Border::BORDER_THIN ),
+                'right' => array( 'style' => PHPExcel_Style_Border::BORDER_THIN )
             )
         );
         $style_obj->applyFromArray($style_array);
@@ -250,11 +259,11 @@ class Excel
         $objTitleFont->setSize(14);
         $objTitleFont->setBold(true);
 
-		$objActSheet->getProtection()->setPassword(self::PASSWORD);//设置保护密码
-		$objActSheet->getProtection()->setSheet(true);
-		$objActSheet->protectCells("{$firstWord}2:{$maxWord}{$i}");
+        $objActSheet->getProtection()->setPassword(self::PASSWORD);//设置保护密码
+        $objActSheet->getProtection()->setSheet(true);
+        $objActSheet->protectCells("{$firstWord}2:{$maxWord}{$i}");
 
-		return $i;
+        return $i;
     }
 }
 
@@ -266,13 +275,16 @@ class ChunkReadFilter implements PHPExcel_Reader_IReadFilter
     private $_startRow = 0; // 开始行
     private $_endRow = 0; // 结束行
     private $_columns = []; // 列跨度
-    public function __construct($startRow, $chunkSize, $columns = []) {
+
+    public function __construct($startRow, $chunkSize, $columns = [])
+    {
         $this->_startRow = $startRow;
         $this->_endRow = $startRow + $chunkSize;
         $this->_columns = $columns;
     }
 
-    public function readCell($column, $row, $worksheetName = '') {
+    public function readCell($column, $row, $worksheetName = '')
+    {
         if ($row >= $this->_startRow && $row <= $this->_endRow) { //过滤行
 //            if ($this->_columns && in_array($column, $this->_columns)) { //过滤列
             return true;
