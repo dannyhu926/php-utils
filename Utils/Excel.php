@@ -162,7 +162,9 @@ class Excel
      * );
      */
     public function pushData(Array $list, Array $columns, $sheet_title) {
-        if (empty($columns)) return false;
+        if (empty($columns) || empty($this->excelObj)) {
+            return false;
+        }
         $objExcel = $this->excelObj;
         $objActSheet = $objExcel->getActiveSheet();
 
