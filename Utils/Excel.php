@@ -69,7 +69,6 @@ class Excel
         } else { //输出内容到文件通过文件路径再用Ajax无刷新页面
             $objWriter->save("{$outputFileName}");
             unset($obj);
-            exit;
         }
     }
 
