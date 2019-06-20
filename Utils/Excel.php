@@ -5,14 +5,14 @@ namespace Utils;
  * @author        dannyhu
  * Excel          导出导入数据类
  * $excelUtils =  Excel::getInstance();
- * $objPHPExcel = Excel::_instanceExcelObj;
+ * $objPHPExcel = $excelUtils->getExcel();
  */
 class Excel
 {
 	const PASSWORD = 'admin';
 
     private static $_instanceObj = null;
-    public static $_instanceExcelObj = null;
+    private $excelObj = null;
 
     public function __construct() {
         /*导入phpExcel核心类  */
@@ -25,18 +25,21 @@ class Excel
     public static function getInstance() {
         if (!(self::$_instanceObj instanceof self) || self::$_instanceObj == null) {
             self::$_instanceObj = new self();
-            self::$_instanceExcelObj = new PHPExcel();
         }
         return self::$_instanceObj;
     }
 
+    public function getExcel() {
+        $this->excelObj = new PHPExcel();
+        return $this->excelObj;
+    }
     /**
      * 生成Excel文件
      * param $outputFileName Excel文件名
      * param $outputExplorer 浏览器输出或文件输出
      */
     public function generatedFile($outputFileName, $outputExplorer = 1) {
-        $obj = self::$_instanceExcelObj;
+        $obj = $this->excelObj;
         $obj->setActiveSheetIndex(0);
         //页眉页脚
         $obj->getActiveSheet()->getHeaderFooter()->setOddHeader('&L&BPersonal cash register&RPrinted on &D');
@@ -60,6 +63,8 @@ class Excel
         } else { //输出内容到文件通过文件路径再用Ajax无刷新页面
             $objWriter->save("{$outputFileName}");
         }
+		$obj->disconnectWorksheets();
+        unset($obj);
     }
 
     /**
@@ -158,7 +163,7 @@ class Excel
      */
     public function pushData(Array $list, Array $columns, $sheet_title) {
         if (empty($columns)) return false;
-        $objExcel = self::$_instanceExcelObj;
+        $objExcel = $this->excelObj;
         $objActSheet = $objExcel->getActiveSheet();
 
         //todo excel表头
