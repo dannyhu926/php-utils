@@ -16,17 +16,15 @@ class Bytes
     public static function getBytes($string)
     {
         $bytes = array();
-
-        $len = strlen($str);
+        $len = strlen($string);
         for ($i = 0; $i < $len; $i++) {
             if (ord($str[$i]) >= 128) {
-                $byte = ord($str[$i]) - 256;
+                $byte = ord($string[$i]) - 256;
             } else {
-                $byte = ord($str[$i]);
+                $byte = ord($string[$i]);
             }
             $bytes[] = $byte;
         }
-
         return $bytes;
     }
 
