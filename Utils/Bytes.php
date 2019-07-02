@@ -16,9 +16,17 @@ class Bytes
     public static function getBytes($string)
     {
         $bytes = array();
-        for ($i = 0; $i < strlen($string); $i++) {
-            $bytes[] = ord($string[$i]);
+
+        $len = strlen($str);
+        for ($i = 0; $i < $len; $i++) {
+            if (ord($str[$i]) >= 128) {
+                $byte = ord($str[$i]) - 256;
+            } else {
+                $byte = ord($str[$i]);
+            }
+            $bytes[] = $byte;
         }
+
         return $bytes;
     }
 
@@ -30,7 +38,6 @@ class Bytes
      * @param  $str   目标字符串
      * @return 一个String类型的数据
      */
-
     public static function toStr($bytes)
     {
         $str = '';
@@ -48,7 +55,6 @@ class Bytes
      * @param $byt 目标byte数组
      * @param $val 需要转换的字符串
      */
-
     public static function integerToBytes($val)
     {
         $byt = array();
@@ -67,7 +73,6 @@ class Bytes
      * @param  $position 指定的开始位置
      * @return 一个Integer类型的数据
      */
-
     public static function bytesToInteger($bytes, $position)
     {
         $val = 0;
@@ -88,7 +93,6 @@ class Bytes
      * @param $byt 目标byte数组
      * @param $val 需要转换的字符串
      */
-
     public static function shortToBytes($val)
     {
         $byt = array();
@@ -105,7 +109,6 @@ class Bytes
      * @param  $position 指定的开始位置
      * @return 一个Short类型的数据
      */
-
     public static function bytesToShort($bytes, $position)
     {
         $val = 0;
