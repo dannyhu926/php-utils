@@ -142,7 +142,7 @@ class Preg
      * @param string $string 待转换的字符串
      * @return string $string 转换后的字符串
      */
-    function merge_spaces($string)
+    public static function merge_spaces($string)
     {
         return preg_replace("/\s(?=\s)/", "\\1", $string);
     }
