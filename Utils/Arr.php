@@ -797,4 +797,25 @@ class Arr
         eval('array_multisort(' . $sortRule . '$rowset);');
         return $rowset;
     }
+
+    /**
+     * 对数组求和支持一维数组和二位数组
+     *
+     * @param array  $array   要排序的数组
+     * @param string $keyname 键值名称
+     * @param int    $scale   排序方向
+     *
+     * @return float
+     */
+    public static function array_plus($array, $scale = 3) {
+        $sum = 0;
+        array_walk($array, function ($v) use (&$sum, $scale) {
+            if (is_array($v)) {
+                $sum = bcadd($sum, array_sum($v), $scale);
+            } else {
+                $sum = bcadd($sum, $v, $scale);
+            }
+        });
+        return $sum;
+    }
 }
