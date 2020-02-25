@@ -146,4 +146,20 @@ class Preg
     {
         return preg_replace("/\s(?=\s)/", "\\1", $string);
     }
+
+    /**
+     * 只支持中文，大小写英文，数字
+     *
+     * @param string $string 待转换的字符串
+     * @return string $string 转换后的字符串
+     */
+    public static function allow_char($string)
+    {
+        $char = '';
+        preg_match("/[\x{4e00}-\x{9fa5}a-zA-Z0-9\-_]+/u", $string, $result);
+        if ($result) {
+            $char = $result['0'];
+        }
+        return $char;
+    }
 }
