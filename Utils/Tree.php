@@ -131,7 +131,7 @@ class Tree
             $child = $this->makeTree($v[$this->param_id]);
             if (!empty($child)) {
                 sort($child);
-                $v['children'] = $child;
+                $v[$this->param_children] = $child;
             }
         }
         unset($v);
