@@ -238,10 +238,11 @@ class ElasticClient
     public function createIndex(string $index, $type, array $mapping = [], array $options = [])
     {
         $index = $this->getIndex($index);
+        $indexTime = $index.'_'.time();
         // 设置索引名称
-        $index = ['index' => $index, 'type' => $type];
+        $params = ['index' => $index, 'type' => $type];
         // 设置分片数量
-        $index['body'] = [
+        $params['body'] = [
             'settings' => [
                 'number_of_shards' => isset($options['number_of_shards']) ? $options['number_of_shards'] : 6,
                 'number_of_replicas' => isset($options['number_of_replicas']) ? $options['number_of_replicas'] : 1,
@@ -250,14 +251,23 @@ class ElasticClient
             ],
             'mappings' => $mapping,
         ];
-        // 创建索引
         try {
-            $result = $this->indices()->create($index);
-        } catch (\Exception $e) {
-            $result = $e->getMessage();
-        }
+            if (true === $this->client->indices()->exists(array('index' => $index))) {
+                return ['code' => 400, 'message' => '创建失败，索引已存在', 'data' => []];
+            }
+            $response = $this->client->indices()->create($params);
+            if (isset($response['acknowledged'])) {
+                $result = $this->createIndexAlias($indexTime, $index);
 
-        return $this->getResult($result, __FUNCTION__);
+                return $result;
+            }
+
+            return ['code' => 400, 'message' => '创建索引失败', 'data' => $response];
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('创建索引(%s)失败，失败原因：【%s】', $index, $e->getMessage()));
+
+            return ['code' => 400, 'message' => '创建索引失败'];
+        }
     }
 
     /**
