@@ -47,7 +47,7 @@ class ElasticClient
      */
     public function refresh($index)
     {
-        $index = C('ELK.env')."-".$index;
+        $index = $this->getIndex($index);
         try {
             $param = ['index' => $index];
             $this->client->indices()->refresh($param);
@@ -67,8 +67,9 @@ class ElasticClient
      */
     public function putMappings(string $index, string $type, array $mappings)
     {
+        $index = $this->getIndex($index);
         $params = [
-            'index' => C('ELK.env').'-'.$index,
+            'index' => $index,
             'type' => $type,
             'body' => [
                 $type => $mappings,
@@ -104,8 +105,9 @@ class ElasticClient
     public function getMapping($index, $type)
     {
         try {
+            $index = $this->getIndex($index);
             $params = [
-                'index' => C('ELK.env').'-'.$index,
+                'index' => $index,
                 'type' => $type,
             ];
             $response = $this->client->indices()->getMapping($params);
@@ -160,7 +162,7 @@ class ElasticClient
      */
     public function search(string $index, string $type, $query, $from = 0, $size = 0, $scrollTime = '')
     {
-        $index = C('ELK.env').'-'.$index;
+        $index = $this->getIndex($index);
         $count = $this->count($index, $type, $query);
         if (0 === $count) {
             return ['code' => 200, 'message' => "", 'data' => ['total' => 0, 'rows' => []]];
@@ -196,6 +198,35 @@ class ElasticClient
     }
 
     /**
+     * aggregation.
+     * 聚合操作
+     *
+     * @param string $index
+     * @param string $type
+     * @param array $query
+     *
+     * @return array
+     */
+    public function aggregation(string $index, string $type, array $query)
+    {
+        $index = $this->getIndex($index);
+        $params = [
+            'index' => $index,
+            'type' => $type,
+            'body' => $query,
+        ];
+        try {
+            $response = $this->client->search($params);
+
+            return ['code' => 200, 'data' => isset($response['aggregations']) ? $response['aggregations'] : []];
+        } catch (\Exception $e) {
+            $this->logger->info(sprintf('聚合操作失败，失败理由：【%s】', $e->getMessage()));
+        }
+
+        return ['code' => 500, 'message' => "聚合操作失败"];
+    }
+
+    /**
      * 创建索引
      *
      * @param $index
@@ -218,6 +249,79 @@ class ElasticClient
         }
 
         return $this->getResult($result, __FUNCTION__);
+    }
+
+    /**
+     * create alias for an index
+     *
+     * @param string $index 索引名
+     * @param string $alias 别名
+     * @param bool $isForce 是否强制将该别名命名到当前索引
+     *
+     * @return array
+     */
+    public function createIndexAlias($index, $alias, $isForce = false)
+    {
+        //检测别名是否存在
+        try {
+            $aliasExists = $this->client->indices()->existsAlias(['name' => $alias]);
+            //索引已存在
+            if ($aliasExists && !$isForce) {
+                return ['code' => 400, 'message' => '别名已存在', 'data' => []];
+            }
+            if ($isForce && true === $aliasExists) {
+                //别名已存在，同意强制删除旧的
+                $aliasInfo = $this->client->indices()->getAlias(['name' => $alias]);
+                $this->client->indices()->deleteAlias(['index' => array_keys($aliasInfo)[0], 'name' => $alias]);
+            }
+            $data = array('index' => $index, 'name' => $alias);
+            $result = $this->client->indices()->putAlias($data);
+            if (isset($result['acknowledged']) && $result['acknowledged']) {
+                return ['code' => 200, 'data' => [], 'message' => ''];
+            }
+
+            return ['code' => 400, 'data' => [], 'message' => '索引名别设置失败'];
+        } catch (\Exception $e) {
+            $this->logger->warning(sprintf('给【%s】赋予别名【%s】出错，错误原因：【%s】', $index, $alias, $e->getMessage()));
+
+            return ['code' => 400, 'message' => '别名赋值出错', 'data' => ''];
+        }
+    }
+
+    /**
+     * 重建索引
+     *
+     * @param string $oldIndex
+     * @param string $newIndex
+     * @param array $query 查询条件
+     * @param array $options
+     *                     可设置  refresh              boolean 是否刷新
+     *                     timeout              time    超时时间
+     *                     consistency          enum    冲突解决办法
+     *                     wait_for_completion  boolean 是否等待当前操作完成
+     *                     requests_per_second  float
+     *
+     * @return array
+     */
+    public function reIndex($oldIndex, $newIndex, $query = [], $options = [])
+    {
+        try {
+            $param = [];
+            isset($options['refresh']) && $param['refresh'] = (bool)$options['refresh'];
+            isset($options['timeout']) && $param['timeout'] = $options['timeout'];
+            isset($options['consistency']) && $param['consistency'] = $options['consistency'];
+            isset($options['wait_for_completion']) && $param['wait_for_completion'] = $options['wait_for_completion'];
+            isset($options['requests_per_second']) && $param['requests_per_second'] = $options['requests_per_second'];
+            $param['body'] = ['source' => ['index' => $oldIndex], 'dest' => ['index' => $newIndex]];
+            !empty($query) && $param['body']['source']['query'] = $query;
+            $result = $this->client->reindex($param);
+
+            return ['code' => 200];
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf("索引【%s】reindex为【%s】出错，错误原因:【%s】", $oldIndex, $newIndex, $e->getMessage()));
+        }
+
+        return ['code' => 400, 'message' => '索引reindex出错'];
     }
 
     /**
@@ -420,6 +524,53 @@ class ElasticClient
     }
 
     /**
+     * checkout the index exists
+     * @param string $index 索引名
+     *
+     * @return array delete result
+     */
+    public function existsIndex(string $index)
+    {
+        $params = [
+            'index' => $index,
+        ];
+        try {
+            $response = $this->client->indices()->exists($params);
+
+            return ['code' => 200, 'message' => '', 'data' => $response];
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('验证索引(%s)失败，失败原因：【%s】', $index, $e->getMessage()));
+
+            return ['code' => 400, 'message' => '验证索引是否存在失败'];
+        }
+    }
+
+    /**
+     * checkout type exists
+     * @param string $index 索引名
+     * @param string $type
+     *
+     * @return array  result
+     */
+    public function existsType(string $index, string $type)
+    {
+        $params = [
+            'index' => $index,
+            'type' => $type,
+        ];
+        try {
+            $response = $this->client->indices()->existsType($params);
+
+            return ['code' => 200, 'data' => $response];
+        } catch (\Exception $e) {
+            //var_dump($e->getMessage());
+            $this->logger->error(sprintf('验证type(%s/%s)失败，失败原因：【%s】', $index, $type, $e->getMessage()));
+
+            return ['code' => 400, 'message' => '验证type是否存在失败'];
+        }
+    }
+
+    /**
      * 根据条件查询结果集条数
      *
      * @param string $index
@@ -519,6 +670,269 @@ class ElasticClient
 
             return ['code' => 500, 'message' => 'bulk操作失败'];
         }
+    }
+
+    /**
+     * 转换自定义运算符为ES联合查询条件.
+     *
+     * @param array $items    查询条目，格式为FilterModel->parseFilterConditions返回数据格式
+     * @param array $mappings 索引的默认设置
+     *
+     * @return array
+     */
+    public function generateBoolQuery($items, $mappings)
+    {
+        $boolQuery = [];
+        if (!empty($items)) {
+            foreach ($items as $key => $item) {
+                if (empty($item['type'])) {
+                    continue;
+                }
+                $matchType = false !== stripos($item['type'], 'term') ? 'term' : 'match';
+                switch ($item['type']) {
+                    case 'match':
+                        // 聚合匹配
+                    case 'term':
+                        // 精准匹配
+                        if (!empty($item['field']) && (!empty($item['value']) || 0 === $item['value'] || '0' === $item['value'])) {
+                            //判断当前的key是否是设置了分词效果
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            $boolQuery['must'][] = [$matchType => [$item['field'] => $item['value']]];
+                        }
+                        break;
+                    case 'must_not':
+                        // 不匹配
+                    case 'must_not_term':
+                        // 精确不匹配
+                        if (!empty($item['field']) && (!empty($item['value']) || 0 === $item['value'] || '0' === $item['value'])) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            $boolQuery['must_not'][] = [$matchType => [$item['field'] => $item['value']]];
+                        }
+                        break;
+                    case 'should':
+                        // 多个选项匹配
+                    case 'should_term':
+                        // 多个选项精确匹配
+                        $values = explode(',', $item['value']);
+                        $bool = [];
+                        if (!empty($values) && is_array($values)) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            foreach ($values as $val) {
+                                $bool['bool']['should'][] = [$matchType => [$item['field'] => $val]];
+                            }
+                            $bool['bool']['minimum_should_match'] = 1; //至少匹配一项
+                            $boolQuery['must'][] = $bool;
+                        }
+                        break;
+                    case 'should_wildcard':
+                        // 多个选项正则匹配
+                        $values = explode(',', $item['value']);
+                        $bool = [];
+                        if (!empty($values) && is_array($values)) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            foreach ($values as $val) {
+                                $bool['bool']['should'][] = ['wildcard' => [$item['field'] => '*'.$val.'*']];
+                            }
+                            $bool['bool']['minimum_should_match'] = 1; //至少匹配一项
+                            $boolQuery['must'][] = $bool;
+                        }
+                        break;
+                    case 'must_not_should_wildcard':
+                        $values = explode(',', $item['value']);
+                        $bool = [];
+                        if (!empty($values) && is_array($values)) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            foreach ($values as $val) {
+                                $bool['bool']['should'][] = ['wildcard' => [$item['field'] => '*'.$val.'*']];
+                            }
+                            $boolQuery['must_not'][] = $bool;
+                        }
+                        break;
+                    case 'should_not_term':
+                        // 多个选项精确不匹配
+                        $values = explode(',', $item['value']);
+                        $bool = [];
+                        if (!empty($values) && is_array($values)) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            foreach ($values as $val) {
+                                $bool['bool']['should'][] = ['bool' => ['must_not' => [['term' => [$item['field'] => $val]]]]];
+                            }
+                            $bool['bool']['minimum_should_match'] = 1; //至少匹配一项
+                            $boolQuery['must'][] = $bool;
+                        }
+                        break;
+                    case 'or':
+                        //或者
+                        if (!empty($item['field']) && (!empty($item['value'] || 0 === $item['value'] || '0' === $item['value']))) {
+                            $boolQuery['should'][] = ['match' => [$item['field'] => $item['value']]];
+                        }
+                        break;
+                    case 'not_exists':
+                        // 不存在
+                        $query = [];
+                        if (!empty($item['field'])) {
+                            if (isset($item['addition'])) {
+                                $query['bool']['should'][] = ['bool' => ['must_not' => ['exists' => ['field' => $item['field']]]]];
+                                $query['bool']['should'][] = [$item['addition']['type'] => [$item['addition']['field'] => $item['addition']['value']]];
+                                $boolQuery['must'][] = $query;
+                            } else {
+                                $boolQuery['must_not'][] = ['exists' => ['field' => $item['field']]];
+                            }
+                        }
+                        break;
+                    case 'exists':
+                        // 存在
+                        if (!empty($item['field'])) {
+                            $boolQuery['must'][] = ['exists' => ['field' => $item['field']]];
+                            if (isset($item['addition'])) {
+                                $boolQuery['must'][] = ['bool' => ['must_not' => [$item['addition']['type'] => [$item['addition']['field'] => $item['addition']['value']]]]];
+                            }
+                        }
+                        break;
+                    case 'range_gt':
+                        // 范围匹配-大于
+                        if (!empty($item['field']) && (!empty($item['value']) || 0 === $item['value'] || '0' === $item['value'])) {
+                            $boolQuery['must'][] = [
+                                'range' => [$item['field'] => ['gt' => $item['value']]],
+                            ];
+                        }
+                        break;
+                    case 'range_lt':
+                        //范围匹配-小于
+                        if (!empty($item['field']) && (!empty($item['value']) || 0 === $item['value'] || '0' === $item['value'])) {
+                            $boolQuery['must'][] = [
+                                'range' => [$item['field'] => ['lt' => $item['value']]],
+                            ];
+                        }
+                        break;
+                    case 'between':
+                        // 范围-介于
+                        $start = isset($item['value']['start']) ? $item['value']['start'] : '';
+                        $end = isset($item['value']['end']) ? $item['value']['end'] : '';
+                        if ((!empty($start) || '0' === $start || 0 === $start) && (!empty($end) || 0 === $end || '0' === $end)) {
+                            $boolQuery['must'][] = ['range' => [$item['field'] => ['gte' => $start]]];
+                            $boolQuery['must'][] = ['range' => [$item['field'] => ['lte' => $end]]];
+                        }
+                        break;
+                    case 'not_between':
+                        // 范围-不介于
+                        $start = isset($item['value']['start']) ? $item['value']['start'] : '';
+                        $end = isset($item['value']['end']) ? $item['value']['end'] : '';
+                        $bool = array();
+                        if ((!empty($start) || '0' === $start || 0 === $start) && (!empty($end) || 0 === $end || '0' === $end)) {
+                            $bool['bool']['should'][] = ['range' => [$item['field'] => ['gt' => $end]]];
+                            $bool['bool']['should'][] = ['range' => [$item['field'] => ['lt' => $start]]];
+                            $bool['bool']['should'][] = ['bool' => ['must_not' => ['exists' => ['field' => $item['field']]]]]; //添加不存在字段
+                            $bool['bool']['minimum_should_match'] = 1; //至少匹配一项
+                            $boolQuery['must'][] = $bool;
+                        }
+                        break;
+                    case 'multi_must_not':
+                        // 不匹配多个
+                    case 'multi_must_not_term':
+                        // 精确不匹配多个--一个都匹配不上
+                        $values = explode(',', $item['value']);
+                        if (!empty($values) && is_array($values)) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            foreach ($values as $val) {
+                                $boolQuery['must_not'][] = [$matchType => [$item['field'] => $val]];
+                            }
+                        }
+                        break;
+                    case 'multi_must_term':
+                        // 精确匹配多个
+                        $values = explode(',', $item['value']);
+                        if (!empty($values) && is_array($values)) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            foreach ($values as $val) {
+                                $boolQuery['must'][] = ['term' => [$item['field'] => $val]];
+                            }
+                        }
+                        break;
+                    case 'multi_should_field_terms':
+                        // 多个选项聚合匹配
+                        $fieldTerms = empty($item['field_terms']) ? array() : $item['field_terms'];
+                        $bool = [];
+                        if (!empty($fieldTerms) && is_array($fieldTerms)) {
+                            foreach ($fieldTerms as $k => $fieldTerm) {
+                                $oper = empty($fieldTerm['oper']) ? '' : $fieldTerm['oper'];
+                                $field = empty($fieldTerm['field']) ? '' : $fieldTerm['field'];
+                                $value = empty($fieldTerm['value']) ? '' : $fieldTerm['value'];
+                                if (!empty($oper) && !empty($field) && (!empty($value) || 000 === $value)) {
+                                    switch ($oper) {
+                                        case 'match':
+                                            $bool['bool']['should'][] = ['match' => [$field => $value]];
+                                            break;
+                                        case 'term':
+                                            isset($mappings[$field]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                                            $bool['bool']['should'][] = ['term' => [$field => $value]];
+                                            break;
+                                        case 'range':
+                                            $expression = empty($fieldTerm['expression']) ? '' : $fieldTerm['expression'];
+                                            if (!empty($expression) && in_array(
+                                                    $expression,
+                                                    ['gt', 'gte', 'lt', 'lte']
+                                                )) {
+                                                $bool['bool']['should'][] = ['range' => [$field => [$expression => $value]]];
+                                            }
+                                            break;
+                                    }
+                                }
+                            }
+                            $bool['bool']['minimum_should_match'] = 1; //至少聚合匹配一项
+                            $boolQuery['must'][] = $bool;
+                        }
+                        break;
+                    case "multi_should_not_term":
+                        // 精确不匹配多个--全部匹配不上才能查找出来
+                        $values = explode(',', $item['value']);
+                        $bool = [];
+                        if (!empty($values) && is_array($values)) {
+                            isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer']) && $item['field'] = $item['field'].".keyword";
+                            foreach ($values as $val) {
+                                $bool['bool']['should'][] = [$matchType => [$item['field'] => $val]];
+                            }
+                        }
+                        $bool['bool']['minimum_should_match'] = count($values);
+                        $boolQuery['must_not'][] = $bool;
+                        break;
+                    case 'wildcard':
+                        //模糊匹配（正则）
+                        if (!empty($item['field']) && (!empty($item['value']) || 0 === $item['value'] || '0' === $item['value'])) {
+                            if (isset($mappings[$item['field']]) && isset($mappings[$item['field']]['analyzer'])) {
+                                //分词器上的模糊匹配
+                                $boolQuery['must'][] = ['match' => [$item['field'] => $item['value']]];
+                                break;
+                            }
+                            if (empty($item['position'])) {
+                                $boolQuery['must'][] = ['wildcard' => [$item['field'] => "*{$item['value']}*"]];
+                            } else {
+                                if ('front' === $item['position']) {
+                                    $boolQuery['must'][] = ['wildcard' => [$item['field'] => "{$item['value']}*"]];
+                                } elseif ('later' === $item['position']) {
+                                    $boolQuery['must'][] = ['wildcard' => [$item['field'] => "*{$item['value']}"]];
+                                }
+                            }
+                        }
+                        break;
+                    case "script":
+                        if (!empty($item['inline']) && (!isset($item['value']) || !empty($item['value']) || 0 === $item['value'] || '0' === $item['value'])) {
+                            $boolQuery['must'][] = [
+                                'script' => [
+                                    'script' => [
+                                        'inline' => $item['inline'],
+                                        'lang' => "painless",
+                                        'params' => isset($item['value']) ? $item['value'] : new \stdClass(),
+                                    ],
+                                ],
+                            ];
+                        }
+                        break;
+                }
+            }
+        }
+
+        return $boolQuery ? ['bool' => $boolQuery] : [];
     }
 
     /**
