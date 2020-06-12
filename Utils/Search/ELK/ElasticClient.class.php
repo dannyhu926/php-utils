@@ -229,18 +229,27 @@ class ElasticClient
     /**
      * 创建索引
      *
-     * @param $index
+     * @param string $index  索引名
      * @param $type
-     *
+     * @param array $mapping 索引mapping设置
+     * @param array $options 创建的索引的参数，settings项
      * @return mixed
      */
-    public function createIndex($index, $type)
+    public function createIndex(string $index, $type, array $mapping = [], array $options = [])
     {
         $index = $this->getIndex($index);
         // 设置索引名称
         $index = ['index' => $index, 'type' => $type];
         // 设置分片数量
-        $index['body']['settings'] = ['number_of_shards' => 5, 'number_of_replicas' => 0];
+        $index['body'] = [
+            'settings' => [
+                'number_of_shards' => isset($options['number_of_shards']) ? $options['number_of_shards'] : 6,
+                'number_of_replicas' => isset($options['number_of_replicas']) ? $options['number_of_replicas'] : 1,
+                'refresh_interval' => isset($options['refresh_interval']) ? $options['refresh_interval'] : '5s',
+                'index.mapping.total_fields.limit' => isset($options['limit']) ? $options['limit'] : 10000000,
+            ],
+            'mappings' => $mapping,
+        ];
         // 创建索引
         try {
             $result = $this->indices()->create($index);
