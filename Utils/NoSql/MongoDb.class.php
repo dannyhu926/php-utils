@@ -7,6 +7,7 @@ namespace App\Utility;
 
 use MongoDB\Driver\BulkWrite;
 use MongoDB\Driver\Manager;
+use MongoDB\Driver\Command;
 use MongoDB\Driver\Query;
 use MongoDB\Driver\WriteConcern;
 use Psr\Log\LoggerInterface;
@@ -18,32 +19,27 @@ class MongoDb
 {
     /** @var LoggerInterface 日志 */
     private $logger;
-
     private $dsn;
-
     private $database;
-
     private static $conn = [];  //保存连接
-
 
     /**
      * MongoDBCommon constructor.
      *
      * @param LoggerInterface $logger
-     * @param Amqp            $amqp
-     * @param string $dsn      //env中配置的参数
+     * @param string $dsn //env中配置的参数
      * @param string $database
      *
      */
-    public function __construct(LoggerInterface $logger, Amqp $amqp, string $dsn = "", string $database = "")
+    public function __construct(LoggerInterface $logger, string $dsn = "", string $database = "")
     {
-        $this->dsn = empty($dsn) ? "MONGODB_URI": $dsn;
+        $this->dsn = empty($dsn) ? "MONGODB_URI" : $dsn;
         $this->database = empty($database) ? getenv("MONGODB_DATABASE") : $database;
         $this->logger = $logger;
     }
 
     /**
-     * @param array  $documents
+     * @param array $documents
      * @param string $collectionName
      *
      * @return mixed 返回成功插入的条数
@@ -61,7 +57,14 @@ class MongoDb
 
             return $result->getInsertedCount();
         } catch (\Exception $exception) {
-            $this->logger->error(sprintf('Mongo数据库【%s】多条数据插入失败,数据%s,原因%s', $collectionName, json_encode($documents), $exception->getMessage()));
+            $this->logger->error(
+                sprintf(
+                    'Mongo数据库【%s】多条数据插入失败,数据%s,原因%s',
+                    $collectionName,
+                    json_encode($documents),
+                    $exception->getMessage()
+                )
+            );
 
             return false;
         }
@@ -70,7 +73,7 @@ class MongoDb
     /**
      * 根据id组删除所有.
      *
-     * @param array  $ids
+     * @param array $ids
      * @param string $collectionName
      *
      * @return int
@@ -81,14 +84,16 @@ class MongoDb
         try {
             $bulk = new BulkWrite();
             foreach ($ids as $id) {
-                $bulk->delete(['_id' => (int) $id]);
+                $bulk->delete(['_id' => (int)$id]);
             }
             $writeConcern = new WriteConcern(WriteConcern::MAJORITY, 1000);
             $result = $manager->executeBulkWrite($this->database.'.'.$collectionName, $bulk, $writeConcern);
-			
+
             return $result->getDeletedCount();
         } catch (\Exception $exception) {
-            $this->logger->error(sprintf('Mongo数据库删除【%s:%s】数据失败，原因%s', $collectionName, json_encode($ids), $exception->getMessage()));
+            $this->logger->error(
+                sprintf('Mongo数据库删除【%s:%s】数据失败，原因%s', $collectionName, json_encode($ids), $exception->getMessage())
+            );
 
             return false;
         }
@@ -98,10 +103,10 @@ class MongoDb
      * 更新操作
      *
      * @param array|int $filter
-     * @param array     $update
-     * @param string    $collectionName
-     * @param string    $method         set/inc两种方式更新
-     * @param bool      $upsert
+     * @param array $update
+     * @param string $collectionName
+     * @param string $method set/inc两种方式更新
+     * @param bool $upsert
      *
      * @return mixed 返回修改个数
      */
@@ -120,7 +125,15 @@ class MongoDb
 
             return max($result->getModifiedCount(), $result->getUpsertedCount());
         } catch (\Exception $exception) {
-            $this->logger->error(sprintf('Mongo数据库更新【%s:%s】数据失败,更新数据%s，原因%s', $collectionName, $id, json_encode($update), $exception->getMessage()));
+            $this->logger->error(
+                sprintf(
+                    'Mongo数据库更新【%s:%s】数据失败,更新数据%s，原因%s',
+                    $collectionName,
+                    $id,
+                    json_encode($update),
+                    $exception->getMessage()
+                )
+            );
 
             return false;
         }
@@ -129,9 +142,9 @@ class MongoDb
     /**
      * 查询接口
      *
-     * @param array  $filter
+     * @param array $filter
      * @param string $collectionName
-     * @param array  $options
+     * @param array $options
      *
      * @return mixed
      *
@@ -148,7 +161,7 @@ class MongoDb
                 foreach ($res as $v) {
                     $item = json_decode(json_encode($v), true);
                     if (is_numeric($item['_id']) || is_string($item['_id'])) {
-                        $item['id'] = (string) $item['_id'];
+                        $item['id'] = (string)$item['_id'];
                     }
                     $items[] = $item;
                 }
@@ -157,10 +170,77 @@ class MongoDb
 
             return $items;
         } catch (\Exception $exception) {
-            $this->logger->error(sprintf('Mongo数据库数据获取【%s:%s】条件数据失败，原因%s', $collectionName, json_encode($filter), $exception->getMessage()));
+            $this->logger->error(
+                sprintf(
+                    'Mongo数据库数据获取【%s:%s】条件数据失败，原因%s',
+                    $collectionName,
+                    json_encode($filter),
+                    $exception->getMessage()
+                )
+            );
 
             return false;
         }
+    }
+
+    /**
+     * 获取统计数
+     *
+     * @param $collectionName
+     * @param array $where
+     * @return int
+     */
+    public function getCount($collectionName, $where = [])
+    {
+        $manager = $this->connect();
+        try {
+            $command = new Command(['count' => $collectionName, 'query' => $where]);
+            $res = $manager->executeCommand($this->database, $command);
+            $items = [];
+            if (!empty($res)) {
+                foreach ($res as $v) {
+                    $item = json_decode(json_encode($v), true);
+                    if (is_numeric($item['_id']) || is_string($item['_id'])) {
+                        $item['id'] = (string)$item['_id'];
+                    }
+                    $items[] = $item;
+                }
+            }
+            unset($res, $v, $item);
+
+            return $items;
+        } catch (\Exception $exception) {
+            $this->logger->error(sprintf('Mongo数据库数据获取【%s】条数失败，原因%s', $collectionName, $exception->getMessage()));
+
+            return false;
+        }
+    }
+
+    /**
+     * @param array $where
+     * @param int $page
+     * @param int $limit
+     * @return false|string
+     */
+    public function pageList($where = [], $page = 1, $limit = 10)
+    {
+        $count = $this->getCount($where);
+        $data['count'] = $count;
+        $endPage = ceil($count / $limit);
+        if ($page > $endPage) {
+            $page = $endPage;
+        } elseif ($page < 1) {
+            $page = 1;
+        }
+        $skip = ($page - 1) * $limit;
+        $options = [
+            'skip' => $skip,
+            'limit' => $limit,
+        ];
+        $data['data'] = $this->fetch($where, $options);
+        $data['page'] = $endPage;
+
+        return json_encode($data);
     }
 
     /**
@@ -174,7 +254,7 @@ class MongoDb
                 return self::$conn[$this->dsn];
             }
             $manager = new Manager(getenv($this->dsn));
-            self::$conn[$this->dsn] =  $manager;
+            self::$conn[$this->dsn] = $manager;
 
             return $manager;
         } catch (\Exception $e) {
