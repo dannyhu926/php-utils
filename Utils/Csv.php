@@ -1,10 +1,10 @@
 <?php
 /**
  *  Csv 工具类
- *  $handle->addHead( $head );
- *  $handle->setFileName( $filename );
+ *  $handle->addHead($head);
+ *  $handle->setFileName($filename);
  *  $handle->addContents($content);
- *  $handle->saveAsFile($i);
+ *  $handle->saveAsFile();
  *
  * @package   Utils
  * @license   MIT
@@ -22,11 +22,12 @@ namespace Utils;
 class Csv
 {
     const LENGTH_LIMIT = 10000000;
+    const SHEET_ROWS_LIMIT = 100000;
     private $fileName = null; //文件名
-    private $fields = null; //文件头部键名
-    private $preContent = null; //标题前内容
-    private $header = null; //文件头部名称
-    private $contents = null; //文件内容
+    private $fields = []; //文件头部键名
+    private $preContent = ''; //标题前内容：bom头等
+    private $header = ''; //文件头部名称
+    private $contents = []; //文件内容
     private $files = []; //文件列表
     private $path = ''; //路径
     private $offset = 1; //第几个文件
@@ -50,9 +51,8 @@ class Csv
     {
         //取出数据
         $title = array_column($head, 'title');
-        $key = array_column($head, 'key');
+        $this->fields = array_column($head, 'field');
         $this->header = implode(',', $title);
-        $this->fields = $key;
     }
 
     /**
@@ -107,19 +107,22 @@ class Csv
                 array_unshift($this->contents, $this->preContent);
             }
         }
-        $contents = implode(PHP_EOL, $this->contents).PHP_EOL;
-        //转码，防乱码
-        $contents = mb_convert_encoding($contents, 'gbk', 'utf-8');
-        $dirPath = dirname($fileName);
-        if (!is_dir($dirPath)) {
-            mkdir($dirPath, 0777, true);
-        }
-        //写入文件
-        $result = file_put_contents($fileName, $contents, FILE_APPEND);
-        if ($result) {
-            $this->files[] = $fileName;
-            $this->contents = [];
-            $this->updateOffset();
+        if (count($this->contents) >= self::SHEET_ROWS_LIMIT) {
+            $beforeArr = array_slice($this->contents, 0, self::SHEET_ROWS_LIMIT);
+            $result = $this->writeDirFile($fileName, $beforeArr);
+            if ($result) {
+                $this->files[] = $fileName;
+                $this->contents = array_slice($this->contents, self::SHEET_ROWS_LIMIT);
+                $this->updateOffset();
+                $this->saveAsFile(true);
+            }
+        } else {
+            $result = $this->writeDirFile($fileName, $this->contents);
+            if ($result) {
+                $this->files[] = $fileName;
+                $this->contents = [];
+                $this->updateOffset();
+            }
         }
     }
 
@@ -241,5 +244,25 @@ class Csv
     private function updateOffset()
     {
         ++$this->offset;
+    }
+
+    /**
+     * 检查目录并写文件
+     *
+     * @param $fileName 文件名
+     * @param $contents 内容数组
+     */
+    private function writeDirFile($fileName, $contents)
+    {
+        $dirPath = dirname($fileName);
+        if (!is_dir($dirPath)) {
+            mkdir($dirPath, 0777, true);
+        }
+        $contents = implode(PHP_EOL, $contents).PHP_EOL;
+        //转码，防乱码
+        $contents = mb_convert_encoding($contents, 'gbk', 'utf-8');
+
+        //写入文件
+        return file_put_contents($fileName, $contents, FILE_APPEND);
     }
 }
