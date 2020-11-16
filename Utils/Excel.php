@@ -215,4 +215,32 @@ class Excel
 
         return $file;
     }
+	
+	/**
+     * 使用php扩展导出文件（大数据方案）
+     *
+     * @param $fileName
+     * @param $header
+     * @param $list
+     * @throws \Exception
+     */
+    public function xlsWriter($fileName, $header, $list)
+    {
+        if (!extension_loaded('xlswriter')) {
+            throw new \Exception('请先安装php的xlswriter扩展');
+        }
+        $config = ['path' => $this->_path];
+        $excel = new \Vtiful\Kernel\Excel($config);
+        $fileObject = $excel->constMemory($fileName);
+
+        $data = [];
+        foreach ($list as $info) {
+            foreach ($header as $key => $title) {
+                $data[] = $info[$key];
+            }
+        }
+        $fileObject->freezePanes(1, 0)
+            ->header(array_values($header))
+            ->data($data)->output();
+    }
 }
