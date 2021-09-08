@@ -39,7 +39,65 @@ class HiveHelper
 
         return self::$hive;
     }
+	
+    /**
+     * 为hive查询的数据源加入key.
+     *
+     * @param mixed $columns
+     * @param array $data
+     * @param bool  $hasKey
+     *
+     * @return array|bool
+     */
+    public static function formatHiveDataPresto($columns, array $data, bool $hasKey = true)
+    {
+        $result = false;
+        if (!empty($columns) && !empty($data)) {
+            $arrColumns = explode(',', $columns);
+            $renameColumns = [];
+            foreach ($arrColumns as $item) {
+                $renameColumns[] = "$item";
+            }
+            if ($hasKey) {
+                $renameColumns[] = 'k';
+            }
+            if ($data) {
+                foreach ($data as $item) {
+                    if (is_array($item)) {
+                        $child = [];
+                        $tmp = array_values($item);
+                        foreach ($renameColumns as $k => $name) {
+                            $child = array_add($child, str_contains($name, '|') ? str_replace('|', ',', $name) : $name, empty($tmp[$k]) ? 0 : $tmp[$k]);
+                        }
+                        $result[] = $child;
+                    } else {
+                        $result[$columns] = $item;
+                    }
+                }
+            }
+        }
 
+        return $result;
+    }
+	
+    /**
+     * @param string $columns
+     *
+     * @return bool
+     */
+    public function splitColumns(string $columns)
+    {
+        $result = false;
+        if ($columns) {
+            $columns = explode(',', $columns);
+            foreach ($columns as $item) {
+                $result[$item] = 0;
+            }
+        }
+
+        return $result;
+    }
+	
     /**
      * 断开Hive连接
      */

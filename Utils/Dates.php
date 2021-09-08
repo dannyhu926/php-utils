@@ -599,4 +599,24 @@ class Dates
 
         return $clock_array;
     }
+	
+    /**
+     * @param     $startDate 2021-08-31 => 2021-09-30
+     * @param int $monthStep
+     */
+    public static function getEndDate($startDate, int $monthStep = 1)
+    {
+        $endDay = str_pad(substr($startDate, 8) - 1, 2, "0", STR_PAD_LEFT);
+        $startYm = substr($startDate, 0, 7);
+        $realDays = date("t", strtotime("{$startYm} +{$monthStep} months"));
+        if ($realDays > $endDay) {
+            $realDays = $endDay;
+            if ('00' == $endDay) {
+                $monthStep--;
+                $realDays = date("t", strtotime("{$startYm} +{$monthStep} months"));
+            }
+        }
+
+        return date("Y-m-{$realDays}", strtotime("$startYm +{$monthStep} months"));
+    }
 }
