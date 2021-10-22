@@ -66,7 +66,7 @@ class PrestoClient
         $result = [];
         $list = $this->fetchAll($sql);
         if (is_array($list) && $list) {
-            $result = current($list)[0];
+            $result = array_values(current($list))[0];
         }
 
         return $result;
