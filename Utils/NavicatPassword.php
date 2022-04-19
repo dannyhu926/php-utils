@@ -1,7 +1,7 @@
 <?php
 /**
  *  Navicat客户端密码加密解密算法
- * //需要指定版本，11或12
+ * //需要指定版本，11或12 12以上的用12
  * $navicatPassword = new NavicatPassword(11);
  * //加密
  * $encode = $navicatPassword->encrypt('123456'); // verstion 11 15057D7BA390, version 12 833E4ABBC56C89041A9070F043641E3B
