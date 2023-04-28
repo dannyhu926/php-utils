@@ -619,4 +619,16 @@ class Dates
 
         return date("Y-m-{$realDays}", strtotime("$startYm +{$monthStep} months"));
     }
+
+    /**
+     * 将日期字符串转化成标准的日期格式
+     *
+     * @param  string $dateTimeStr 20220912094052
+     * @return string 返回日期
+     */
+    public static function getDateTimeByDateString($dateTimeStr)
+    {
+        list($Y, $m, $d, $H, $i, $s) = sscanf($dateTimeStr, "%04d%02d%02d%02d%02d%02d");
+        return sprintf("%04d-%02d-%02d %02d:%02d:%02d", $Y, $m, $d, $H, $i, $s);
+    }
 }
