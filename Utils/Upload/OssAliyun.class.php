@@ -127,4 +127,41 @@ class OssAliyun
 
         return $result;
     }
+	
+    /**
+     * 获取目录下文件和子目录列表成功.
+     *
+     * @param $options
+     * @param mixed $prefix
+     *
+     * @return array
+     */
+    public function listFiles($prefix)
+    {
+        try {
+            $options = [
+                'delimiter' => '/', //文件夹的分隔符
+                'prefix' => $prefix.'/', //列出prefix目录下的所有文件和文件夹
+                'max-keys' => 1000,
+                'marker' => '',
+            ];
+            $list = $this->ossClinet->listObjects(self::bucket, $options);
+            $files = $dirs = [];
+            if ($list) {
+                foreach ($list->getObjectList() as $file) {
+                    if ($file->getSize() > 0) {
+                        $files[] = $file->getKey();
+                    }
+                }
+                foreach ($list->getPrefixList() as $childDir) {
+                    $dirs[] = $childDir->getPrefix();
+                }
+            }
+            $result = ['code' => 0, 'msg' => '获取目录下文件和子目录列表成功', 'data' => ['file_list' => $files, 'dir_list' => $dirs]];
+        } catch (OssException $e) {
+            $result = ['code' => 1, 'msg' => $e->getMessage()];
+        }
+
+        return $result;
+    }	
 }
