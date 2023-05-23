@@ -127,6 +127,25 @@ class OssAliyun
 
         return $result;
     }
+
+    /**
+     * 下载到本地内存.
+     *
+     * @param $object 存储空间名称
+     *
+     * @return string
+     */
+    public function readFile($object)
+    {
+        try {
+            $content = $this->ossClinet->getObject(self::bucket, $object);
+            $result = ['code' => 0, 'msg' => '下载到本地内存成功', 'data' => $content];
+        } catch (OssException $e) {
+            $result = ['code' => 1, 'msg' => $e->getMessage()];
+        }
+
+        return $result;
+    }
 	
     /**
      * 获取目录下文件和子目录列表成功.
