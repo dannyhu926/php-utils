@@ -141,7 +141,7 @@ class OssAliyun
         try {
             $options = [
                 'delimiter' => '/', //文件夹的分隔符
-                'prefix' => $prefix.'/', //列出prefix目录下的所有文件和文件夹
+                'prefix' => rtrim($prefix, '/').'/', //列出prefix目录下的所有文件和文件夹
                 'max-keys' => 1000,
                 'marker' => '',
             ];
