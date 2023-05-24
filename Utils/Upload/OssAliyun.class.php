@@ -146,6 +146,29 @@ class OssAliyun
 
         return $result;
     }
+
+    /**
+     * 下载到本地另存为新文件.
+     *
+     * @param       $object    存储空间名称
+     * @param mixed $localFile '/tmp/a.txt'
+     *
+     * @return string
+     */
+    public function saveFile($object, $localFile)
+    {
+        try {
+            $options = [
+                OssClient::OSS_FILE_DOWNLOAD => $localFile,
+            ];
+            $this->ossClinet->getObject(self::bucket, $object, $options);
+            $result = ['code' => 0, 'msg' => '下载成功', 'data' => []];
+        } catch (OssException $e) {
+            $result = ['code' => 1, 'msg' => $e->getMessage()];
+        }
+
+        return $result;
+    }
 	
     /**
      * 获取目录下文件和子目录列表成功.
